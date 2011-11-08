@@ -1,0 +1,4 @@
+int proccess_instruction(int type, char * input_regs, stmt_data data);
+
+
+

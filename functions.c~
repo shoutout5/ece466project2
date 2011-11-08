@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-typedef struct a {
+typedef struct next {
 	int type;
 	char * defined_regs;
 	int imm1;
@@ -10,7 +10,7 @@ typedef struct a {
 	char reg1[50];
 	char reg2[50];
 	char label_name[50];
-	struct a *next;
+	struct next *next;
 	
 } stmt;
 

@@ -180,12 +180,7 @@ extern FILE *yyin;
 
 int yyerror() { return 0; }
 
-int main(int argc, char *argv[]) {
-
- yyin = fopen(argv[1], "r"); 
- yyparse();
-
-}
+main() {yyparse();}
 
 void allocaStmt(char *reg)
 {
