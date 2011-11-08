@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include "functions.h"
 
 typedef union {
 	int  imm;
@@ -130,6 +131,7 @@ comment:		COMMENT				{  }
 
 
 %%
+extern FILE *yyin;
 
 int yyerror() { return 0; }
 
