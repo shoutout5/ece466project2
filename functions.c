@@ -11,11 +11,11 @@ int proccess_instruction(int type, char * defined_regs, param_t arg1, param_t ar
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	data->defined_regs = defined_regs;
-	if (arg1.	
+	if (true)
 		data->imm1=imm1;
 	else
 		strcpy(data->arg1.reg,arg1.reg);
-	if (
+	if (true)
 		data->imm2=imm2;
 	else
 		strcpy(data->reg2,reg2);
