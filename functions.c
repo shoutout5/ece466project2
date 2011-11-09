@@ -1,30 +1,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "defines.h"
 
-typedef struct a {
-	int type;
-	char * defined_regs;
-	int imm1;
-	int imm2;
-	char reg1[50];
-	char reg2[50];
-	char label_name[50];
-	struct a *next;
-	
-} stmt;
 
 stmt *current=NULL;
 
-int proccess_instruction(int type, char * defined_regs, int imm1, int imm2, char *reg1, char *reg2, char *label_name){
+int proccess_instruction(int type, char * defined_regs, param_t arg1, param_t arg2, ,int cmp, char **branch, char *label_name){
 	
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	data->defined_regs = defined_regs;
-	data->imm1=imm1;
-	data->imm2=imm2;
-	strcpy(data->reg1,reg1);
-	strcpy(data->reg2,reg2);
+	if (arg1.	
+		data->imm1=imm1;
+	else
+		strcpy(data->arg1.reg,arg1.reg);
+	if (
+		data->imm2=imm2;
+	else
+		strcpy(data->reg2,reg2);
 	strcpy(data->label_name,label_name);
 	data->next=NULL;
 	if (current != NULL)

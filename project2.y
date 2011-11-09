@@ -2,11 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "functions.h"
-
-typedef union {
-	int  imm;
-	char reg[50];
-} param_t;
+#include "defines.h"
 
 void allocaStmt(char *reg);
 void labelStmt(char *name);
@@ -190,11 +186,14 @@ int main(int argc, char *argv[]) {
 void allocaStmt(char *reg)
 {
 	printf("___Found Alloca Statment, Reg: %s\n\n", reg);
+        //proccess_instruction(int type, char * defined_regs, int imm1, int imm2, char *reg1, char *reg2, char *label_name)
+	proccess_instruction(ALLOCA, reg, 0, 0, 0, NULL, NULL, NULL);
 }
 
 void labelStmt(char *name)
 {
 	printf("__Label %s\n", name);
+ 	proccess_instruction(LABEL, "", 0, 0, 0, NULL, NULL, name);
 }
 
 void add(char *reg, param_t p1, param_t p2, int type)
@@ -202,14 +201,17 @@ void add(char *reg, param_t p1, param_t p2, int type)
 	if(type == CC)
 	{
 		printf("__Add: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
+		proccess_instruction(ADD, reg, p1.imm, p2.imm, 0, NULL, NULL, NULL);
 	}
 	else if(type == RR)
 	{
 		printf("__Add: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
+		proccess_instruction(ADD, reg, 0, 0, 0, p1.reg, p2.reg, NULL);
 	}
 	else if(type == RC)
 	{
 		printf("__Add: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
+		proccess_instruction(ADD, reg, 0, p2.imm, 0, p1.reg, NULL, NULL);
 	}
 }
 
@@ -218,18 +220,22 @@ void sub(char *reg, param_t p1, param_t p2, int type)
 	if(type == CC)
 	{
 		printf("__Sub: %s <- %d - %d\n\n", reg, p1.imm, p2.imm);
+		proccess_instruction(SUB, reg, p1.imm, p2.imm, 0, NULL, NULL, NULL);
 	}
 	else if(type == RR)
 	{
 		printf("__Sub: %s <- %s - %s\n\n", reg, p1.reg, p2.reg);
+		proccess_instruction(SUB, reg, 0, 0, 0, p1.reg, p2.reg, NULL);
 	}
 	else if(type == RC)
 	{
 		printf("__Sub: %s <- %s - %d\n\n", reg, p1.reg, p2.imm);
+		proccess_instruction(ADD, reg, 0, p2.imm, 0, p1.reg, NULL, NULL);
 	}
 	else if(type == CR)
 	{
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+		proccess_instruction(ADD, reg, p1.imm, 0, 0, NULL, p2.reg, NULL);
 	}
 }
 
@@ -237,12 +243,14 @@ void sub(char *reg, param_t p1, param_t p2, int type)
 void brUncond(char *label)
 {
 	printf("__Branch: %s", &label[1]);
+	proccess_instruction(BRANCH_UNCOND, NULL, 0, 0, 0, NULL, NULL, label);
 }
 
 
 void brCond(char *cond, char *trueLabel, char *falseLabel)
 {
 	printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
+	proccess_instruction(BRANCH_UNCOND, cond, 0, 0, 0, trueLabel, falseLabel, label);
 }
 
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
@@ -250,6 +258,7 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
 	if(type == CC)
 	{
 		printf("__CMP: %s <- %d %s %d\n\n", assignReg, p1.imm, comp, p2.imm);
+		proccess_instruction(CMP, assignReg, p1.imm, int imm2, char *reg1, char *reg2, char *label_name)
 	}
 	else if(type == RR)
 	{
