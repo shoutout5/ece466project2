@@ -4,19 +4,19 @@
 #include "defines.h"
 
 
-int process_instruction(int type, char * defined_regs, param_t arg1, param_t arg2, char *cmp, char **branch, char *label_name){
-	
+int process_instruction(int type, char * defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
+		printf("starting");
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	data->defined_regs = defined_regs;
 	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST )
-		data->arg1.imm=arg1.imm;
+		data->arg1.imm=arg1->imm;
 	else
-		strcpy(data->arg1.reg,arg1.reg);
+		strcpy(data->arg1.reg,arg1->reg);
 	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC )
-		data->arg2.imm=arg2.imm;
+		data->arg2.imm=arg2->imm;
 	else
-		strcpy(data->arg2.reg,arg2.reg);
+		strcpy(data->arg2.reg,arg2->reg);
 	strcpy(data->label_name,label_name);
 
 	data->next=NULL;
@@ -25,6 +25,7 @@ int process_instruction(int type, char * defined_regs, param_t arg1, param_t arg
 	if (HEAD == NULL)
 		HEAD=data;
 	current=data;
+	printf("finished");
 	return 0;
 }
 
