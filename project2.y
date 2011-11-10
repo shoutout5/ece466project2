@@ -28,7 +28,7 @@ void storeStmt(char *dest, param_t param, int type);
 %token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL DIV EQUALS REG LABEL
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
 	RPAREN LBRACKET RBRACKET LBRACE RBRACE I8 I32 POINTER X COMMA NUM ELIPSIS
-	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT I1 ICMP CMP_TYPE VOID
+	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT I1 ICMP CMP_TYPE VOID NEWLINE
 
 %type <num> NUM
 %type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER
@@ -204,13 +204,15 @@ int main(int argc, char *argv[]) {
 	stmt *current=NULL;
 	yyin = fopen(argv[1], "r"); 
 	yyparse();
+	printf("yyparse done\n");
 	current=HEAD;
 	FILE *fp = fopen("output.ll", "w");
 	if(fp == NULL)
-		printf("Could not open output file");
+		printf("Could not open output file\n");
 	else 
-		while (current->next != NULL){
-			printf("%s",generate_llvm(current,fp));
+		while (current != NULL){
+			generate_llvm(current,fp);
+			current=current->next;
 		}
 	fclose(fp);
 	

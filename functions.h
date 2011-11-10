@@ -5,6 +5,6 @@
 
 int process_instruction(int type, char *defined_regs, param_t arg1, param_t arg2, char *cmp, char **branch, char *label_name);
 
-char *generate_llvm(stmt *stmnt, FILE *fp);
+void generate_llvm(stmt *stmnt, FILE *fp);
 
 #endif

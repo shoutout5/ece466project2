@@ -79,7 +79,8 @@
      I1 = 295,
      ICMP = 296,
      CMP_TYPE = 297,
-     VOID = 298
+     VOID = 298,
+     NEWLINE = 299
    };
 #endif
 
@@ -99,7 +100,7 @@ typedef union YYSTYPE
 
 
 /* Line 1676 of yacc.c  */
-#line 103 "project2.y.h"
+#line 104 "project2.y.h"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */

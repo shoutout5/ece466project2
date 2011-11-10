@@ -49,7 +49,8 @@ x							{ printf("X\n"); return X; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
 …							{ printf("ELIPSIS\n"); return ELIPSIS; }
 ";".*						{ printf("COMMENT\n"); return COMMENT; }
-
+"\n"						{ printf("NEWLINE\n"); return NEWLINE; }
+.						 {printf("UNKNOWN\n"); }
 %%
 
 

@@ -158,7 +158,8 @@ void storeStmt(char *dest, param_t param, int type);
      I1 = 295,
      ICMP = 296,
      CMP_TYPE = 297,
-     VOID = 298
+     VOID = 298,
+     NEWLINE = 299
    };
 #endif
 
@@ -178,7 +179,7 @@ typedef union YYSTYPE
 
 
 /* Line 214 of yacc.c  */
-#line 182 "project2.y.c"
+#line 183 "project2.y.c"
 } YYSTYPE;
 # define YYSTYPE_IS_TRIVIAL 1
 # define yystype YYSTYPE /* obsolescent; will be withdrawn */
@@ -190,7 +191,7 @@ typedef union YYSTYPE
 
 
 /* Line 264 of yacc.c  */
-#line 194 "project2.y.c"
+#line 195 "project2.y.c"
 
 #ifdef short
 # undef short
@@ -408,7 +409,7 @@ union yyalloc
 #define YYLAST   118
 
 /* YYNTOKENS -- Number of terminals.  */
-#define YYNTOKENS  44
+#define YYNTOKENS  45
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  30
 /* YYNRULES -- Number of rules.  */
@@ -418,7 +419,7 @@ union yyalloc
 
 /* YYTRANSLATE(YYLEX) -- Bison symbol number corresponding to YYLEX.  */
 #define YYUNDEFTOK  2
-#define YYMAXUTOK   298
+#define YYMAXUTOK   299
 
 #define YYTRANSLATE(YYX)						\
   ((unsigned int) (YYX) <= YYMAXUTOK ? yytranslate[YYX] : YYUNDEFTOK)
@@ -455,7 +456,7 @@ static const yytype_uint8 yytranslate[] =
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42,    43
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44
 };
 
 #if YYDEBUG
@@ -474,16 +475,16 @@ static const yytype_uint8 yyprhs[] =
 /* YYRHS -- A `-1'-separated list of the rules' RHS.  */
 static const yytype_int8 yyrhs[] =
 {
-      45,     0,    -1,    46,    -1,    46,    45,    -1,    47,    27,
-      51,    28,    -1,    15,    30,    22,    48,    -1,    15,    43,
-      22,    48,    -1,    23,    24,    -1,    23,    50,    24,    -1,
-      23,    49,    24,    -1,    50,    33,    50,    -1,    49,    33,
+      46,     0,    -1,    47,    -1,    47,    46,    -1,    48,    27,
+      52,    28,    -1,    15,    30,    22,    49,    -1,    15,    43,
+      22,    49,    -1,    23,    24,    -1,    23,    51,    24,    -1,
+      23,    50,    24,    -1,    51,    33,    51,    -1,    50,    33,
       30,    13,    -1,    30,    13,    -1,    30,    31,    13,    -1,
-      52,    -1,    52,    51,    -1,    53,    -1,    72,    -1,    54,
-      -1,    55,    -1,    56,    -1,    57,    -1,    58,    -1,    59,
-      -1,    60,    -1,    61,    -1,    62,    -1,    63,    -1,    64,
-      -1,    65,    -1,    67,    -1,    66,    -1,    68,    -1,    69,
-      -1,    70,    -1,    71,    -1,    73,    -1,    13,    12,     3,
+      53,    -1,    53,    52,    -1,    54,    -1,    73,    -1,    55,
+      -1,    56,    -1,    57,    -1,    58,    -1,    59,    -1,    60,
+      -1,    61,    -1,    62,    -1,    63,    -1,    64,    -1,    65,
+      -1,    66,    -1,    68,    -1,    67,    -1,    69,    -1,    70,
+      -1,    71,    -1,    72,    -1,    74,    -1,    13,    12,     3,
       30,    -1,    13,    12,     3,    30,    33,    30,    34,    -1,
       14,    -1,    13,    12,     8,    30,    34,    33,    34,    -1,
       13,    12,     8,    30,    13,    33,    13,    -1,    13,    12,
@@ -525,13 +526,13 @@ static const char *const yytname[] =
   "GLOBAL_DEF", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET", "LBRACE",
   "RBRACE", "I8", "I32", "POINTER", "X", "COMMA", "NUM", "ELIPSIS",
   "NOUNWIND_SSP", "LABEL_KEYWORD", "DECLARE", "COMMENT", "I1", "ICMP",
-  "CMP_TYPE", "VOID", "$accept", "func_list", "func_call", "func_start",
-  "param_list", "comma_list", "param_obj", "stmt_list", "stmt",
-  "alloca_stmt", "label_stmt", "addCC_stmt", "addRR_stmt", "addRC_stmt",
-  "addCR_stmt", "subCC_stmt", "subRR_stmt", "subRC_stmt", "subCR_stmt",
-  "brUncond_stmt", "brCond_stmt", "icmpRR_stmt", "icmpRC_stmt",
-  "icmpCC_stmt", "icmpCR_stmt", "load_stmt", "storeReg_stmt",
-  "storeCon_stmt", "array_type", "comment", 0
+  "CMP_TYPE", "VOID", "NEWLINE", "$accept", "func_list", "func_call",
+  "func_start", "param_list", "comma_list", "param_obj", "stmt_list",
+  "stmt", "alloca_stmt", "label_stmt", "addCC_stmt", "addRR_stmt",
+  "addRC_stmt", "addCR_stmt", "subCC_stmt", "subRR_stmt", "subRC_stmt",
+  "subCR_stmt", "brUncond_stmt", "brCond_stmt", "icmpRR_stmt",
+  "icmpRC_stmt", "icmpCC_stmt", "icmpCR_stmt", "load_stmt",
+  "storeReg_stmt", "storeCon_stmt", "array_type", "comment", 0
 };
 #endif
 
@@ -544,19 +545,19 @@ static const yytype_uint16 yytoknum[] =
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298
+     295,   296,   297,   298,   299
 };
 # endif
 
 /* YYR1[YYN] -- Symbol number of symbol that rule YYN derives.  */
 static const yytype_uint8 yyr1[] =
 {
-       0,    44,    45,    45,    46,    47,    47,    48,    48,    48,
-      49,    49,    50,    50,    51,    51,    52,    52,    52,    52,
-      52,    52,    52,    52,    52,    52,    52,    52,    52,    52,
-      52,    52,    52,    52,    52,    52,    52,    53,    53,    54,
-      55,    56,    57,    58,    59,    60,    61,    62,    63,    64,
-      65,    66,    67,    68,    69,    70,    71,    72,    73
+       0,    45,    46,    46,    47,    48,    48,    49,    49,    49,
+      50,    50,    51,    51,    52,    52,    53,    53,    53,    53,
+      53,    53,    53,    53,    53,    53,    53,    53,    53,    53,
+      53,    53,    53,    53,    53,    53,    53,    54,    54,    55,
+      56,    57,    58,    59,    60,    61,    62,    63,    64,    65,
+      66,    67,    68,    69,    70,    71,    72,    73,    74
 };
 
 /* YYR2[YYN] -- Number of symbols composing right hand side of rule YYN.  */
@@ -667,15 +668,15 @@ static const yytype_int8 yycheck[] =
    symbol of state STATE-NUM.  */
 static const yytype_uint8 yystos[] =
 {
-       0,    15,    45,    46,    47,    30,    43,     0,    45,    27,
-      22,    22,     7,    13,    14,    21,    25,    39,    51,    52,
-      53,    54,    55,    56,    57,    58,    59,    60,    61,    62,
-      63,    64,    65,    66,    67,    68,    69,    70,    71,    72,
-      73,    23,    48,    48,    30,    12,    37,    40,    34,    28,
-      51,    24,    30,    49,    50,    13,    34,     3,     6,     8,
+       0,    15,    46,    47,    48,    30,    43,     0,    46,    27,
+      22,    22,     7,    13,    14,    21,    25,    39,    52,    53,
+      54,    55,    56,    57,    58,    59,    60,    61,    62,    63,
+      64,    65,    66,    67,    68,    69,    70,    71,    72,    73,
+      74,    23,    49,    49,    30,    12,    37,    40,    34,    28,
+      52,    24,    30,    50,    51,    13,    34,     3,     6,     8,
        9,    41,    13,    13,    32,    13,    31,    24,    33,    24,
       33,    33,    33,    30,    30,    30,    30,    42,    33,    30,
-      13,    30,    50,    30,    30,    33,    31,    13,    34,    13,
+      13,    30,    51,    30,    30,    33,    31,    13,    34,    13,
       34,    30,    37,    26,    13,    31,    31,    30,    33,    33,
       33,    33,    13,    34,    13,    34,    13,    34,    13,    34,
       13,    34,    13,    34,    33,    33,    33,    13,    34,    13,
@@ -1870,7 +1871,7 @@ yyreduce:
 
 
 /* Line 1455 of yacc.c  */
-#line 1874 "project2.y.c"
+#line 1875 "project2.y.c"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -2096,13 +2097,15 @@ int main(int argc, char *argv[]) {
 	stmt *current=NULL;
 	yyin = fopen(argv[1], "r"); 
 	yyparse();
+	printf("yyparse done\n");
 	current=HEAD;
 	FILE *fp = fopen("output.ll", "w");
 	if(fp == NULL)
-		printf("Could not open output file");
+		printf("Could not open output file\n");
 	else 
-		while (current->next != NULL){
-			printf("%s",generate_llvm(current,fp));
+		while (current != NULL){
+			generate_llvm(current,fp);
+			current=current->next;
 		}
 	fclose(fp);
 	
