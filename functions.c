@@ -75,11 +75,20 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case CMP_CR:
 			sprintf(output,"%s = icmp %s i32 %d, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
+		case GEP_RR:
+			sprintf(output,"%s = getelementptr i32 %s, i32 %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
+		case GEP_RC:
+			sprintf(output,"%s = getelementptr i32 %s, i32 %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
 		case LABELL:
 			sprintf(output,"; <label>:%s \n",stmnt->label_name);
 			break;
 		case LOADD:
 			sprintf(output,"%s = load i32* %s \n",stmnt->defined_regs,stmnt->arg1.reg);
+			break;
+		case RETURN:
+			sprintf(output,"ret %s %s",stmnt->label_name,stmnt->arg1.reg);
 			break;
 		case STR_REG:
 			sprintf(output,"store i32 %s, i32* %s \n",stmnt->arg1.reg, stmnt->arg2.reg);
@@ -99,6 +108,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case SUB_CR:
 			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
+		
 		
 		default: sprintf(output,"Failed to identify");
 

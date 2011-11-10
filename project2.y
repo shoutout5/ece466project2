@@ -13,6 +13,8 @@ void brCond(char *cond, char *trueLabel, char *falseLabel);
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type);
 void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
+void return_stmt(char *return_type, param_t param);
+void getelementpointers(int type,char *defined, param_t param1, param_t param2);
 
 #define CONST_VAL	(4)
 #define REG_VAL	(5)
@@ -36,7 +38,7 @@ void storeStmt(char *dest, param_t param, int type);
 %type <string> DEFINE
 
 %% 
-/*
+
 // top level of syntax tree
 func_list: 	func_call
 			| func_call func_list
@@ -59,7 +61,7 @@ comma_list:	param_obj COMMA param_obj
 
 param_obj:	I32 REG
 			| I32 POINTER REG
-*/
+
 			
 //----------------------------
 stmt_list:
@@ -86,12 +88,15 @@ stmt:	alloca_stmt		{ printf("\n"); }
 		| load_stmt		{ printf("\n"); }
 		| storeReg_stmt	{ printf("\n"); }
 		| storeCon_stmt	{ printf("\n"); }
+		| storePtr_stmt	{ printf("\n"); }
+		| getelementptr	{ printf("\n"); }
+		| ret_stmt		{ printf("\n");  }
 		| comment			{ printf("\n"); }
 		
 // statements
-alloca_stmt:	REG EQUALS ALLOCA I32 newlines          { allocaStmt($1, 0); }
-               | REG EQUALS ALLOCA I32 COMMA I32 NUM newlines 	{ allocaStmt($1, $7); }
-			| REG EQUALS ALLOCA I32 COMMA ALIGN NUM newlines	{ allocaStmt($1, 0); }
+alloca_stmt:	REG EQUALS ALLOCA I32           { allocaStmt($1, 0); }
+               | REG EQUALS ALLOCA I32 COMMA I32 NUM  	{ allocaStmt($1, $7); }
+			| REG EQUALS ALLOCA I32 COMMA ALIGN NUM 	{ allocaStmt($1, 0); }
 
 label_stmt:	LABEL				{ labelStmt($1); }
 
@@ -174,38 +179,61 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE I32 NUM COMMA REG
 								  strcpy(reg2.reg, $8);
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
-load_stmt:	REG EQUALS LOAD I32 POINTER REG newlines
+load_stmt:	REG EQUALS LOAD I32 POINTER REG 
 								{ loadStmt($1, $5); }
 
-			| REG EQUALS LOAD I32 POINTER REG COMMA ALIGN NUM newlines
+			| REG EQUALS LOAD I32 POINTER REG COMMA ALIGN NUM 
 								{ loadStmt($1, $5); }
 
-storeReg_stmt:	STORE I32 REG COMMA I32 POINTER REG newlines
+storeReg_stmt:	STORE I32 REG COMMA I32 POINTER REG 
 								{ param_t param;
 								  strcpy(param.reg, $3);
 								  storeStmt($6, param, STR_REG); }
 
-			| STORE I32 REG COMMA I32 POINTER REG COMMA ALIGN NUM newlines
+			| STORE I32 REG COMMA I32 POINTER REG COMMA ALIGN NUM 
 								{ param_t param;
 								  strcpy(param.reg, $3);
 								  storeStmt($6, param, STR_REG); }
 
-storeCon_stmt:	STORE I32 NUM COMMA I32 POINTER REG newlines
+storeCon_stmt:	STORE I32 NUM COMMA I32 POINTER REG 
 								{ param_t param;
 								  param.imm = $3;
 								  storeStmt($6, param, STR_CONST); }
 
-			| STORE I32 NUM COMMA I32 POINTER REG COMMA ALIGN NUM newlines
+			| STORE I32 NUM COMMA I32 POINTER REG COMMA ALIGN NUM 
 								{ param_t param;
 								  param.imm = $3;
 								  storeStmt($6, param, STR_CONST); }
+
+storePtr_stmt:	STORE I32 POINTER REG COMMA I32 POINTER REG 
+								{ param_t param;
+								  strcpy(param.reg, $3);
+								  storeStmt($7, param, STR_REG); }
+
+			| STORE I32 POINTER REG COMMA I32 POINTER REG COMMA ALIGN NUM 
+								{ param_t param;
+								  strcpy(param.reg, $3);
+								  storeStmt($7, param, STR_REG); }
+
+getelementptr:	REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 NUM
+								{ param_t param1; param_t param2; strcpy(param1.reg,$6); param2.imm=$9;
+									getelementpointers(GEP_RC,$1, param1, param2);  }
+			| REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 REG
+								{ param_t param1; param_t param2; strcpy(param1.reg,$6); strcpy(param2.reg,$9);
+									getelementpointers(GEP_RR,$1,param1, param2); }
+
+ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
+									return_stmt("void",empty); }
+			| RET I32 NUM			{	param_t empty; strcpy(empty.reg,"");	 
+								return_stmt("i32",empty); }
+			| RET I32 REG			{  	param_t param; strcpy(param.reg, $3);
+								return_stmt("i32",param); }
+			| RET I32 POINTER REG 	{ 	param_t param; sprintf(param.reg,"%s%s",$3,$4);
+							return_stmt("i32",param); }
 
 // portions of complex statments
 array_type:	LBRACKET NUM X I32 RBRACKET
 								{ printf("___Array Type: %d x i32\n\n", $2); }
-
-newlines:		NEWLINE				{  }
-			| NEWLINE newlines		{  }
 
 comment:		COMMENT				{  }
 
@@ -220,7 +248,7 @@ stmt *HEAD=NULL;
 stmt *current=NULL;
 param_t empty;
 
-int main(int argc, char *argv[]) {
+void main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
 	HEAD=NULL;
 	current=NULL;
@@ -362,18 +390,19 @@ void storeStmt(char *dest, param_t param, int type)
     process_instruction(type,dest,&param, &empty, NULL, NULL, empty.reg);
 }
 
+void return_stmt(char *return_type, param_t param)
+{
+	printf("__return statement: %s ",return_type);
+	process_instruction(RETURN,empty.reg,&param,&empty,NULL, NULL,return_type);
+}
 
 
+void getelementpointers(int type,char *defined, param_t param1, param_t param2)
+{
+	printf("___GEP ");
+	process_instruction(type, defined,&param1,&param2,NULL, NULL,"");
 
-
-
-
-
-
-
-
-
-
+}
 
 
 

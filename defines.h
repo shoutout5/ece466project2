@@ -24,6 +24,9 @@
 #define LABELL	20
 #define ALLOC	21
 #define LOADD	22
+#define GEP_RC 23
+#define GEP_RR 24
+#define RETURN 25
 
 typedef union {
 	int  imm;

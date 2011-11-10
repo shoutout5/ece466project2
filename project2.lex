@@ -51,9 +51,10 @@ x							{ printf("X\n"); return X; }
 …							{ printf("ELIPSIS\n"); return ELIPSIS; }
 " "						;
 ";".*"\n"						{ printf("COMMENT\n"); return COMMENT; }
-"\n"						{ printf("NEWLINE\n"); return NEWLINE; }
+"\n"						;
 .						 {printf("UNKNOWN\n"); }
 %%
+
 
 
 
