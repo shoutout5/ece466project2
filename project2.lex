@@ -10,6 +10,7 @@
 %%
 
 alloca  					{ printf("ALLOCA\n"); return ALLOCA; }
+align						{ printf("ALIGN\n"); return ALIGN; }
 icmp							{ printf("ICMP\n"); return ICMP; }
 "eq"|"ne"|"slt"|"sle"|"sgt"|"sge"	{ strcpy(yylval.reg, yytext); printf("Compare Type\n"); return CMP_TYPE;}
 call							{ printf("CALL\n"); return CALL; }
@@ -49,10 +50,11 @@ x							{ printf("X\n"); return X; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
 …							{ printf("ELIPSIS\n"); return ELIPSIS; }
 " "						;
-";".*						{ printf("COMMENT\n"); return COMMENT; }
+";".*"\n"						{ printf("COMMENT\n"); return COMMENT; }
 "\n"						{ printf("NEWLINE\n"); return NEWLINE; }
 .						 {printf("UNKNOWN\n"); }
 %%
+
 
 
 

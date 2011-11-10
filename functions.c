@@ -34,50 +34,71 @@ int process_instruction(int type, char * defined_regs, param_t *arg1, param_t *a
 void generate_llvm(stmt *stmnt, FILE *fp){
 
 	char output[150];
-	printf("Here");
 	switch (stmnt->type){
 
 		case ADD_CC:
-			sprintf(output,"%s = add i32 %d, %d",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = add i32 %d, %d \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			break;
 		case ADD_RR:
-			sprintf(output,"%s = add i32 %s, %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = add i32 %s, %s \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
 		case ADD_RC:
-			sprintf(output,"%s = add i32 %s, %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = add i32 %s, %d \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
 		case ADD_CR:
-			sprintf(output,"%s = add i32 %d, %s",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			break;
 		case ALLOC:
-			if(stmnt->arg1.imm == 0)
-				sprintf(output,"%s = alloca i32 ",stmnt->defined_regs);
-			else
-				sprintf(output,"%s = alloca i32, i32 %d",stmnt->defined_regs, stmnt->arg1.imm);
+			if(stmnt->arg1.imm == 0) {
+				sprintf(output,"%s = alloca i32 \n",stmnt->defined_regs);
+				break;
+			}
+			else {
+				sprintf(output,"%s = alloca i32, i32 %d \n",stmnt->defined_regs, stmnt->arg1.imm);
+				break;
+			}
 		case BR_UNCOND:
-			sprintf(output,"br label %s",stmnt->label_name);
+			sprintf(output,"br label %s \n",stmnt->label_name);
+			break;
 		case BR_COND:
-			sprintf(output,"BR i1 %s, label %s, label %s",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2]);
+			sprintf(output,"BR i1 %s, label %s, label %s \n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2]);
+			break;
 		case CMP_CC:
-			sprintf(output,"%s = icmp %s i32 %d, %d",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = icmp %s i32 %d, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.imm);
+			break;
 		case CMP_RR:
-			sprintf(output,"%s = icmp %s i32 %s, %s",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = icmp %s i32 %s, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
 		case CMP_RC:
-			sprintf(output,"%s = icmp %s i32 %s, %d",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = icmp %s i32 %s, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
 		case CMP_CR:
-			sprintf(output,"%s = icmp %s i32 %d, %s",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = icmp %s i32 %d, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.reg);
+			break;
 		case LABELL:
-			sprintf(output,"; <label>:%s",stmnt->label_name);
+			sprintf(output,"; <label>:%s \n",stmnt->label_name);
+			break;
 		case LOADD:
-			sprintf(output,"%s = load i32* %s",stmnt->defined_regs,stmnt->arg1.reg);
+			sprintf(output,"%s = load i32* %s \n",stmnt->defined_regs,stmnt->arg1.reg);
+			break;
 		case STR_REG:
-			sprintf(output,"store i32 %s, i32* %s",stmnt->arg1.reg, stmnt->arg2.reg);
+			sprintf(output,"store i32 %s, i32* %s \n",stmnt->arg1.reg, stmnt->arg2.reg);
+			break;
 		case STR_CONST:
-			sprintf(output,"store i32 %d, i32* %s",stmnt->arg1.imm, stmnt->arg2.reg);
+			sprintf(output,"store i32 %d, i32* %s \n",stmnt->arg1.imm, stmnt->arg2.reg);
+			break;
 		case SUB_CC:
-			sprintf(output,"%s = sub i32 %d, %d",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = sub i32 %d, %d \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			break;
 		case SUB_RR:
-			sprintf(output,"%s = sub i32 %s, %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = sub i32 %s, %s \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
 		case SUB_RC:
-			sprintf(output,"%s = sub i32 %s, %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = sub i32 %s, %d \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
 		case SUB_CR:
-			sprintf(output,"%s = add i32 %d, %s",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			break;
 		
 		default: sprintf(output,"Failed to identify");
 

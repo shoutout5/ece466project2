@@ -29,6 +29,7 @@ void storeStmt(char *dest, param_t param, int type);
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
 	RPAREN LBRACKET RBRACKET LBRACE RBRACE I8 I32 POINTER X COMMA NUM ELIPSIS
 	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT I1 ICMP CMP_TYPE VOID NEWLINE
+	ALIGN
 
 %type <num> NUM
 %type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER
@@ -88,9 +89,9 @@ stmt:	alloca_stmt		{ printf("\n"); }
 		| comment			{ printf("\n"); }
 		
 // statements
-alloca_stmt:	REG EQUALS ALLOCA I32                   { allocaStmt($1, 0); }
-                | REG EQUALS ALLOCA I32 COMMA I32 NUM   { int size = $7;
-                                                          allocaStmt($1, size); }
+alloca_stmt:	REG EQUALS ALLOCA I32 newlines          { allocaStmt($1, 0); }
+               | REG EQUALS ALLOCA I32 COMMA I32 NUM newlines 	{ allocaStmt($1, $7); }
+			| REG EQUALS ALLOCA I32 COMMA ALIGN NUM newlines	{ allocaStmt($1, 0); }
 
 label_stmt:	LABEL				{ labelStmt($1); }
 
@@ -173,15 +174,28 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE I32 NUM COMMA REG
 								  strcpy(reg2.reg, $8);
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
-load_stmt:	REG EQUALS LOAD I32 POINTER
+load_stmt:	REG EQUALS LOAD I32 POINTER REG newlines
 								{ loadStmt($1, $5); }
 
-storeReg_stmt:	STORE I32 REG COMMA I32 POINTER
+			| REG EQUALS LOAD I32 POINTER REG COMMA ALIGN NUM newlines
+								{ loadStmt($1, $5); }
+
+storeReg_stmt:	STORE I32 REG COMMA I32 POINTER REG newlines
 								{ param_t param;
 								  strcpy(param.reg, $3);
 								  storeStmt($6, param, STR_REG); }
 
-storeCon_stmt:	STORE I32 NUM COMMA I32 POINTER
+			| STORE I32 REG COMMA I32 POINTER REG COMMA ALIGN NUM newlines
+								{ param_t param;
+								  strcpy(param.reg, $3);
+								  storeStmt($6, param, STR_REG); }
+
+storeCon_stmt:	STORE I32 NUM COMMA I32 POINTER REG newlines
+								{ param_t param;
+								  param.imm = $3;
+								  storeStmt($6, param, STR_CONST); }
+
+			| STORE I32 NUM COMMA I32 POINTER REG COMMA ALIGN NUM newlines
 								{ param_t param;
 								  param.imm = $3;
 								  storeStmt($6, param, STR_CONST); }
@@ -189,6 +203,9 @@ storeCon_stmt:	STORE I32 NUM COMMA I32 POINTER
 // portions of complex statments
 array_type:	LBRACKET NUM X I32 RBRACKET
 								{ printf("___Array Type: %d x i32\n\n", $2); }
+
+newlines:		NEWLINE				{  }
+			| NEWLINE newlines		{  }
 
 comment:		COMMENT				{  }
 
@@ -205,8 +222,8 @@ param_t empty;
 
 int main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
-	stmt *HEAD=NULL;
-	stmt *current=NULL;
+	HEAD=NULL;
+	current=NULL;
 	yyin = fopen(argv[1], "r"); 
 	yyparse();
 	printf("yyparse done\n");
@@ -214,15 +231,14 @@ int main(int argc, char *argv[]) {
 	FILE *fp = fopen("output.ll", "w");
 	if(fp == NULL)
 		printf("Could not open output file\n");
-	else 
+	else  {
 		printf("in else\n");
 		while (current != NULL){
 			generate_llvm(current,fp);
 			current=current->next;
 		}
 	fclose(fp);
-	
-
+	}
 }
 
 
@@ -328,7 +344,7 @@ void loadStmt(char *destReg, char *pointer)
 	param_t tmp;
 	strcpy(tmp.reg,pointer);
     
-    process_instruction(LOADD, destReg, &tmp, &empty, NULL, NULL, NULL);
+    process_instruction(LOADD, destReg, &tmp, &empty, NULL, NULL, empty.reg);
 }
 
 
