@@ -18,6 +18,7 @@ int process_instruction(int type, char * defined_regs, param_t arg1, param_t arg
 	else
 		strcpy(data->arg2.reg,arg2.reg);
 	strcpy(data->label_name,label_name);
+
 	data->next=NULL;
 	if (current != NULL)
 		current->next=data;
@@ -29,10 +30,10 @@ int process_instruction(int type, char * defined_regs, param_t arg1, param_t arg
 
 
 
-char *generate_llvm(stmt *stmnt, FILE *fp){
+void generate_llvm(stmt *stmnt, FILE *fp){
 
 	char output[150];
-	
+	printf("Here");
 	switch (stmnt->type){
 
 		case ADD_CC:
