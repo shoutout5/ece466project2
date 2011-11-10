@@ -13,7 +13,7 @@ alloca  					{ printf("ALLOCA\n"); return ALLOCA; }
 icmp							{ printf("ICMP\n"); return ICMP; }
 "eq"|"ne"|"slt"|"sle"|"sgt"|"sge"	{ strcpy(yylval.reg, yytext); printf("Compare Type\n"); return CMP_TYPE;}
 call							{ printf("CALL\n"); return CALL; }
-define						{ printf("DEFINE\n"); return DEFINE; }
+define						{ printf("DEFINE\n"); yylval.string = yytext; return DEFINE; }
 declare						{ printf("DECLARE\n"); return DECLARE; }
 "getelementptr inbounds"			{ printf("GEP_INBOUNDS\n"); return GEP_INBOUNDS; }
 load							{ printf("LOAD\n"); return LOAD; }
@@ -42,8 +42,8 @@ label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "}"							{ printf("RBRACE\n"); return RBRACE; }
 i1							{ printf("I1\n"); return I1; }
 i8							{ printf("I8\n"); return I8; }
-[\*]?i32							{ printf("I32\n"); return I32; }
-\*+.+						{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
+i32							{ printf("I32\n"); return I32; }
+\*+						{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
 x							{ printf("X\n"); return X; }
 ","							{ printf("COMMA\n"); return COMMA; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
@@ -51,6 +51,7 @@ x							{ printf("X\n"); return X; }
 ";".*						{ printf("COMMENT\n"); return COMMENT; }
 
 %%
+
 
 
 

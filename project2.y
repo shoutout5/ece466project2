@@ -17,12 +17,11 @@ void storeStmt(char *dest, param_t param, int type);
 #define CONST_VAL	(4)
 #define REG_VAL	(5)
 
-
-
 %}
 
 %union {
   int 	num;
+  char	*string;
   char	reg[50];
 }
 
@@ -33,25 +32,33 @@ void storeStmt(char *dest, param_t param, int type);
 
 %type <num> NUM
 %type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER
+%type <string> DEFINE
 
 %% 
 // top level of syntax tree
 func_list: 	func_call
 			| func_call func_list
 			
-func_call:	DEFINE I32 GLOBAL_DEF param_list LBRACE stmt_list RBRACE
+func_call:	 func_start  LBRACE stmt_list RBRACE
 						{ printf("__function definition\n"); }
 
-			| DEFINE VOID GLOBAL_DEF param_list LBRACE stmt_list RBRACE
-						{ printf("__function definition\n"); }
+func_start:	DEFINE I32 GLOBAL_DEF param_list		
+						{ printf("Function Header: %s\n", $1); }
+						
+			| DEFINE VOID GLOBAL_DEF param_list
+						{ printf("Function Header: %s\n", $1); }
 
 param_list:	LPAREN RPAREN
-			| LPAREN I32 REG RPAREN
+			| LPAREN param_obj RPAREN
 			| LPAREN comma_list RPAREN
 
-comma_list:	I32 REG COMMA I32 REG
+comma_list:	param_obj COMMA param_obj
 			| comma_list COMMA I32 REG
 
+param_obj:	I32 REG
+			| I32 POINTER REG
+			
+//----------------------------
 stmt_list:
 		stmt				{ printf("\n"); }
 		| stmt stmt_list 	{ printf("\n"); }
@@ -186,26 +193,43 @@ comment:		COMMENT				{  }
 
 %%
 extern FILE *yyin;
-
 int yyerror() { return 0; }
+stmt *HEAD=NULL;
+stmt *current=NULL;
+param_t empty;
 
 int main(int argc, char *argv[]) {
-
- yyin = fopen(argv[1], "r"); 
- yyparse();
+	empty.imm = 0;	
+	stmt *HEAD=NULL;
+	stmt *current=NULL;
+	yyin = fopen(argv[1], "r"); 
+	yyparse();
+	current=HEAD;
+	FILE *fp = fopen("output.ll", "w");
+	if(fp == NULL)
+		printf("Could not open output file");
+	else 
+		while (current->next != NULL){
+			printf("%s",generate_llvm(current,fp));
+		}
+	fclose(fp);
+	
 
 }
+
 
 void allocaStmt(char *reg, int size)
 {
 	printf("___Found Alloca Statment, Reg: %s\n\n", reg);
-	//process_instruction(ALLOCA, reg, size, NULL, NULL, NULL, NULL);
+	param_t tmp;
+	tmp.imm = size;
+	process_instruction(ALLOC, reg, tmp, empty, NULL, NULL, NULL);
 }
 
 void labelStmt(char *name)
 {
 	printf("__Label %s\n", name);
- 	//process_instruction(LABEL, NULL, NULL, NULL, NULL, NULL, name);
+ 	process_instruction(LABELL, NULL, empty, empty, NULL, NULL, name);
 }
 
 void add(char *reg, param_t p1, param_t p2, int type)
@@ -227,7 +251,7 @@ void add(char *reg, param_t p1, param_t p2, int type)
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
     
-    //process_instruction(type, reg, p1, p2, NULL, NULL, NULL);
+    process_instruction(type, reg, p1, p2, NULL, NULL, NULL);
 }
 
 void sub(char *reg, param_t p1, param_t p2, int type)
@@ -248,21 +272,22 @@ void sub(char *reg, param_t p1, param_t p2, int type)
 	{
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
-    //process_instruction(type, reg, p1, p2, NULL, NULL, NULL);
+    process_instruction(type, reg, p1, p2, NULL, NULL, NULL);
 }
 
 
 void brUncond(char *label)
 {
 	printf("__Branch: %s", &label[1]);
-	//process_instruction(BR_UNCOND, NULL, NULL, NULL, NULL, NULL, label);
+	process_instruction(BR_UNCOND, NULL, empty, empty, NULL, NULL, label);
 }
 
 
 void brCond(char *cond, char *trueLabel, char *falseLabel)
 {
 	printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
-	//process_instruction(BR_COND, NULL, NULL, NULL, NULL, {cond, trueLabel, falseLabel}, label);
+	char * arr[3] = {cond, trueLabel, falseLabel};
+	process_instruction(BR_COND, NULL, empty, empty, NULL, arr, NULL);
 }
 
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
@@ -284,15 +309,17 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
 		printf("__CMP: %s <- %d %s %s\n\n", assignReg, p1.imm, comp, p2.reg);
 	}
     
-    //process_instruction(type, assignReg, p1, p2, cmp, NULL, label_name)
+    process_instruction(type, assignReg, p1, p2, comp, NULL, NULL);
 }
 
 
 void loadStmt(char *destReg, char *pointer)
 {
 	printf("__load: %s <- %s\n\n", destReg, pointer);
+	param_t tmp;
+	strcpy(tmp.reg,pointer);
     
-    //process_instruction(LOAD, 
+    process_instruction(LOADD, destReg, tmp, empty, NULL, NULL, NULL);
 }
 
 
@@ -307,8 +334,9 @@ void storeStmt(char *dest, param_t param, int type)
 		printf("__store: %s <- %d\n\n", dest, param.imm);
 	}
     
-    //process_instruction(type, 
+    process_instruction(type,dest,param, empty, NULL, NULL, NULL);
 }
+
 
 
 

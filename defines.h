@@ -21,22 +21,28 @@
 #define CR (3)
 #define STR_REG     18
 #define STR_CONST   19
+#define LABELL	20
+#define ALLOC	21
+#define LOADD	22
 
 typedef union {
 	int  imm;
 	char reg[50];
 } param_t;
 
-typedef struct {
+typedef struct node{
 	int type;
 	char * defined_regs;
 	param_t arg1;
 	param_t arg2;
-	int cmp;
+	char *cmp;
 	char *branch[3];
 	char label_name[50];
-	struct a *next;
+	struct node *next;
 } stmt;
+
+extern stmt *current;
+extern stmt *HEAD;
 
 #endif
 
