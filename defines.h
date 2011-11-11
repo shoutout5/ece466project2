@@ -27,6 +27,9 @@
 #define GEP_RC 23
 #define GEP_RR 24
 #define RETURN 25
+#define GLOBAL_CONST 26
+#define CALL_PRINTF 27
+#define CALL_SCANF 28
 
 typedef union {
 	int  imm;

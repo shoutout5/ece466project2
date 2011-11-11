@@ -15,6 +15,7 @@ void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
 void return_stmt(char *return_type, param_t param);
 void getelementpointers(int type,char *defined, param_t param1, param_t param2);
+void global_constant(char *name,param_t num, param_t val);
 
 #define CONST_VAL	(4)
 #define REG_VAL	(5)
@@ -26,12 +27,13 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2);
   char	*string;
   char	reg[50];
 }
+%expect 4
 
 %token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL DIV EQUALS REG LABEL
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
 	RPAREN LBRACKET RBRACKET LBRACE RBRACE I8 I32 POINTER X COMMA NUM ELIPSIS
 	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT I1 ICMP CMP_TYPE VOID NEWLINE
-	ALIGN
+	ALIGN STR_LITERAL SCANF_CALL PRINTF_CALL NSW
 
 %type <num> NUM
 %type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER
@@ -40,10 +42,18 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2);
 %% 
 
 // top level of syntax tree
+file:		content		{  }
+			| content file {  }
+
+content:		func_list		{  }
+			| global_list	{  }
+
 func_list: 	func_call
 			| func_call func_list
 			
-func_call:	 func_start  LBRACE stmt_list RBRACE
+func_call:	func_start  LBRACE stmt_list RBRACE
+						{ printf("__function definition\n"); }
+			| func_start  NOUNWIND LBRACE stmt_list RBRACE
 						{ printf("__function definition\n"); }
 
 func_start:	DEFINE I32 GLOBAL_DEF param_list		
@@ -65,33 +75,35 @@ param_obj:	I32 REG
 			
 //----------------------------
 stmt_list:
-		stmt				{ printf("\n"); }
-		| stmt stmt_list 	{ printf("\n"); }
+		stmt				{  }
+		| stmt stmt_list 	{  }
 
-stmt:	alloca_stmt		{ printf("\n"); }
-		| array_type		{ printf("\n"); }
-		| label_stmt		{ printf("\n"); }
-		| addCC_stmt		{ printf("\n"); }
-		| addRR_stmt		{ printf("\n"); }
-		| addRC_stmt		{ printf("\n"); }
-		| addCR_stmt		{ printf("\n"); }
-		| subCC_stmt		{ printf("\n"); }
-		| subRR_stmt		{ printf("\n"); }
-		| subRC_stmt		{ printf("\n"); }
-		| subCR_stmt		{ printf("\n"); }
-		| brUncond_stmt	{ printf("\n"); }
-		| brCond_stmt		{ printf("\n"); }
-		| icmpRR_stmt		{ printf("\n"); }
-		| icmpCC_stmt		{ printf("\n"); }
-		| icmpRC_stmt		{ printf("\n"); }
-		| icmpCR_stmt		{ printf("\n"); }
-		| load_stmt		{ printf("\n"); }
-		| storeReg_stmt	{ printf("\n"); }
-		| storeCon_stmt	{ printf("\n"); }
-		| storePtr_stmt	{ printf("\n"); }
-		| getelementptr	{ printf("\n"); }
-		| ret_stmt		{ printf("\n");  }
-		| comment			{ printf("\n"); }
+stmt:	alloca_stmt		{  }
+		| array_type		{  }
+		| label_stmt		{  }
+		| addCC_stmt		{  }
+		| addRR_stmt		{  }
+		| addRC_stmt		{  }
+		| addCR_stmt		{  }
+		| subCC_stmt		{  }
+		| subRR_stmt		{  }
+		| subRC_stmt		{  }
+		| subCR_stmt		{  }
+		| brUncond_stmt	{  }
+		| brCond_stmt		{  }
+		| icmpRR_stmt		{  }
+		| icmpCC_stmt		{  }
+		| icmpRC_stmt		{  }
+		| icmpCR_stmt		{  }
+		| load_stmt		{  }
+		| storeReg_stmt	{  }
+		| storeCon_stmt	{  }
+		| storePtr_stmt	{  }
+		| getelementptr	{  }
+		| ret_stmt		{  }
+		| scanf_call		{ printf("__________________________SCANF\n"); }
+		| printf_call		{ printf("__________________________PRINTF\n"); }
+		| comment			{  }
 		
 // statements
 alloca_stmt:	REG EQUALS ALLOCA I32           { allocaStmt($1, 0); }
@@ -105,11 +117,23 @@ addCC_stmt:	REG EQUALS ADD I32 NUM COMMA NUM
 								  const1.imm = $5;
 								  const2.imm = $7;
 								  add($1, const1, const2, ADD_CC); }
+								  
+			| REG EQUALS ADD NSW I32 NUM COMMA NUM
+								{ param_t const1, const2;
+								  const1.imm = $6;
+								  const2.imm = $8;
+								  add($1, const1, const2, ADD_CC); }
 
 addRR_stmt:	REG EQUALS ADD I32 REG COMMA REG
 								{ param_t reg1, reg2;
 								  strcpy(reg1.reg, $5);
 								  strcpy(reg2.reg, $7);
+								  add($1, reg1, reg2, ADD_RR); }
+
+			| REG EQUALS ADD NSW I32 REG COMMA REG
+								{ param_t reg1, reg2;
+								  strcpy(reg1.reg, $6);
+								  strcpy(reg2.reg, $8);
 								  add($1, reg1, reg2, ADD_RR); }
 
 addRC_stmt:	REG EQUALS ADD I32 REG COMMA NUM
@@ -118,10 +142,22 @@ addRC_stmt:	REG EQUALS ADD I32 REG COMMA NUM
 								  const1.imm = $7;
 								  add($1, reg1, const1, ADD_RR); }
 
+			| REG EQUALS ADD NSW I32 REG COMMA NUM
+								{ param_t reg1, const1;
+								  strcpy(reg1.reg, $6);
+								  const1.imm = $8;
+								  add($1, reg1, const1, ADD_RR); }
+
 addCR_stmt:	REG EQUALS ADD I32 NUM COMMA REG
 								{ param_t reg1, const1;
 								  strcpy(reg1.reg, $7);
 								  const1.imm = $5;
+								  sub($1, reg1, const1, ADD_CR); }
+
+			| REG EQUALS ADD NSW I32 NUM COMMA REG
+								{ param_t reg1, const1;
+								  strcpy(reg1.reg, $8);
+								  const1.imm = $6;
 								  sub($1, reg1, const1, ADD_CR); }
 
 //----------------------------
@@ -131,10 +167,22 @@ subCC_stmt:	REG EQUALS SUB I32 NUM COMMA NUM
 								  const2.imm = $7;
 								  sub($1, const1, const2, SUB_CC); }
 
+			| REG EQUALS SUB NSW I32 NUM COMMA NUM
+								{ param_t const1, const2;
+								  const1.imm = $6;
+								  const2.imm = $8;
+								  sub($1, const1, const2, SUB_CC); }
+
 subRR_stmt:	REG EQUALS SUB I32 REG COMMA REG
 								{ param_t reg1, reg2;
 								  strcpy(reg1.reg, $5);
 								  strcpy(reg2.reg, $7);
+								  sub($1, reg1, reg2, SUB_RR); }
+
+			| REG EQUALS SUB NSW I32 REG COMMA REG
+								{ param_t reg1, reg2;
+								  strcpy(reg1.reg, $6);
+								  strcpy(reg2.reg, $8);
 								  sub($1, reg1, reg2, SUB_RR); }
 
 subRC_stmt:	REG EQUALS SUB I32 REG COMMA NUM
@@ -143,10 +191,22 @@ subRC_stmt:	REG EQUALS SUB I32 REG COMMA NUM
 								  const1.imm = $7;
 								  sub($1, reg1, const1, SUB_RR); }
 
+			| REG EQUALS SUB NSW I32 REG COMMA NUM
+								{ param_t reg1, const1;
+								  strcpy(reg1.reg, $6);
+								  const1.imm = $8;
+								  sub($1, reg1, const1, SUB_RR); }
+
 subCR_stmt:	REG EQUALS SUB I32 NUM COMMA REG
 								{ param_t reg1, reg2;
 								  reg1.imm = $5;
 								  strcpy(reg2.reg, $7);
+								  sub($1, reg1, reg2, SUB_CR); }
+
+			| REG EQUALS SUB NSW I32 NUM COMMA REG
+								{ param_t reg1, reg2;
+								  reg1.imm = $6;
+								  strcpy(reg2.reg, $8);
 								  sub($1, reg1, reg2, SUB_CR); }
 //----------------------------
 brUncond_stmt:	BR LABEL_KEYWORD REG
@@ -180,7 +240,8 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE I32 NUM COMMA REG
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
 load_stmt:	REG EQUALS LOAD I32 POINTER REG 
-								{ loadStmt($1, $5); }
+								{ char tmp[150]; sprintf(tmp,"%s%s",$5,$6); 
+									loadStmt($1, tmp); }
 
 			| REG EQUALS LOAD I32 POINTER REG COMMA ALIGN NUM 
 								{ loadStmt($1, $5); }
@@ -233,8 +294,38 @@ ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 			| RET I32 POINTER REG 	{ 	param_t param; sprintf(param.reg,"%s%s",$3,$4);
 							return_stmt("i32",param); }
 
+//---------------------------
+
+scanf_call:	REG EQUALS CALL I32 call_pointer SCANF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA arg_list RPAREN
+								{ call(CALL_SCANF, $1, $12,$17,$20, $23) }
+								
+printf_call:	REG EQUALS CALL I32 call_pointer PRINTF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA arg_list RPAREN
+								{  }
+								
+call_pointer:	LPAREN I8 POINTER COMMA ELIPSIS RPAREN POINTER
+								{  }
+
+arg_list:		param_obj				{  }
+			| param_obj COMMA param_obj	{  }
+			| arg_list COMMA param_obj 	{  }
+//---------------------------
+
+//global statments
+global_list:	global_stmt				{  }
+			| global_stmt	global_list	{  }
+			
+global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITERAL
+									{ printf("_______global stmt\n"); 
+										param_t tmp1; strcpy(tmp1.reg,$7);
+										global_constant($1,param_t num, param_t val);
+									}
+			| DECLARE I32 SCANF_CALL LPAREN I8 POINTER COMMA ELIPSIS RPAREN	{  }
+			| DECLARE I32 PRINTF_CALL LPAREN I8 POINTER COMMA ELIPSIS RPAREN	{  }
+									
 // portions of complex statments
 array_type:	LBRACKET NUM X I32 RBRACKET
+								{ printf("___Array Type: %d x i32\n\n", $2); }
+			| LBRACKET NUM X I8 RBRACKET
 								{ printf("___Array Type: %d x i32\n\n", $2); }
 
 comment:		COMMENT				{  }
@@ -371,6 +462,18 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
     process_instruction(type, assignReg, &p1, &p2, comp, NULL, empty.reg);
 }
 
+void getelementpointers(int type,char *defined, param_t param1, param_t param2)
+{
+	printf("___GEP ");
+	process_instruction(type, defined,&param1,&param2,NULL, NULL,"");
+
+}
+
+void global_constant(char *name,param_t num, param_t val)
+{
+	printf("____GBL_CONST");
+	process_instruction(GLOBAL_CONST,"",&num,&val,NULL,NULL,name);
+}
 
 void loadStmt(char *destReg, char *pointer)
 {
@@ -402,13 +505,17 @@ void return_stmt(char *return_type, param_t param)
 	process_instruction(RETURN,empty.reg,&param,&empty,NULL, NULL,return_type);
 }
 
-
-void getelementpointers(int type,char *defined, param_t param1, param_t param2)
+void call(int type, char *defined, char *array_type, int num1, int num2, char * arg_list)
 {
-	printf("___GEP ");
-	process_instruction(type, defined,&param1,&param2,NULL, NULL,"");
-
+	if (type == CALL_PRINTF)
+		printf("____PRINTF");
+	else		
+		printf("____SCANF");
+	param_t param1; param1.imm=num1;
+	param_t param2; param2.imm=num2;
+	process_instruction(type,defined,&param1,&param2,array_type, NULL,arg_list);
 }
+
 
 
 

@@ -8,6 +8,8 @@
 
 
 %%
+"target datalayout =".*			{ printf("Target datalayout ignored\n"); }
+"target triple =".*				{ printf("Target triple ignored\n"); }
 
 alloca  					{ printf("ALLOCA\n"); return ALLOCA; }
 align						{ printf("ALIGN\n"); return ALIGN; }
@@ -18,6 +20,7 @@ define						{ printf("DEFINE\n"); yylval.string = yytext; return DEFINE; }
 declare						{ printf("DECLARE\n"); return DECLARE; }
 "getelementptr inbounds"			{ printf("GEP_INBOUNDS\n"); return GEP_INBOUNDS; }
 load							{ printf("LOAD\n"); return LOAD; }
+nounwind						{ printf("NOUNWIND\n"); return NOUNWIND; }
 "nounwind ssp"					{ printf("NOUNWIND_SSP\n"); return NOUNWIND_SSP; }
 private						{ printf("PRIVATE\n"); return PRIVATE; }
 unnamed_addr					{ printf("UNNAMED_ADDR\n"); return UNNAMED_ADDR; }
@@ -30,30 +33,35 @@ div							{ printf("DIV\n"); return DIV; }
 ret							{ printf("RET\n"); return RET; }
 br							{ printf("BR\n"); return BR; }
 void							{ printf("VOID\n"); return VOID; }
+nsw							{ printf("NSW\n"); return NSW; }
+@scanf						{ printf("SCANF_CALL\n"); return SCANF_CALL; }
+@printf						{ printf("PRINTF_CALL\n"); return PRINTF_CALL; }
 label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "="							{ printf("EQUALS\n"); return EQUALS; }
 "%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); printf("REG , %s\n", &yytext[1]); return REG; }
 [a-zA-Z0-9][a-zA-Z_0-9]*":"		{ strcpy(yylval.reg, yytext); printf("LABEL\n"); return LABEL; }
-"@"[a-zA-Z.][a-zA-Z0-9]*		{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
+"@"[a-zA-Z.][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
 "("							{ printf("LPAREN\n"); return LPAREN; }
 ")"							{ printf("RPAREN\n"); return RPAREN; }
 "["							{ printf("LBRACKET\n"); return LBRACKET; }
 "]"							{ printf("RBRACKET\n"); return RBRACKET; }
 "{"							{ printf("LBRACE\n"); return LBRACE; }
 "}"							{ printf("RBRACE\n"); return RBRACE; }
+"c\"".*"\""					{ strcpy(yylval.reg, yytext); printf("STRING LITERAL\n"); return STR_LITERAL; }
 i1							{ printf("I1\n"); return I1; }
 i8							{ printf("I8\n"); return I8; }
 i32							{ printf("I32\n"); return I32; }
-\*+						{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
+\*+							{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
 x							{ printf("X\n"); return X; }
 ","							{ printf("COMMA\n"); return COMMA; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
-…							{ printf("ELIPSIS\n"); return ELIPSIS; }
-" "						;
-";".*"\n"						{ printf("COMMENT\n"); return COMMENT; }
-"\n"						;
-.						 {printf("UNKNOWN\n"); }
+"..."						{ printf("ELIPSIS\n"); return ELIPSIS; }
+" "							;
+";".*"\n"						{ printf("COMMENT\n");  }
+"\n"							;
+.						 	{printf("UNKNOWN\n"); }
 %%
+
 
 
 

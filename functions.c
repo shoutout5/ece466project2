@@ -61,7 +61,13 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"br label %s \n",stmnt->label_name);
 			break;
 		case BR_COND:
-			sprintf(output,"BR i1 %s, label %s, label %s \n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2]);
+			sprintf(output,"br i1 %s, label %s, label %s \n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2]);
+			break;
+		case CALL_PRINTF:
+			sprintf(output,"%s = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str0, i32 0, i32 0), i32 %%r9)",stmnt->defined_regs);
+			break;
+		case CALL_SCANF:
+			sprintf(output,"%s = call i32 (i8*, ...)* @scanf(i8* getelementptr inbounds ([3 x i8]* @.str0, i32 0, i32 0), i32* %%a)",stmnt->defined_regs);
 			break;
 		case CMP_CC:
 			sprintf(output,"%s = icmp %s i32 %d, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.imm);
@@ -80,6 +86,9 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			break;
 		case GEP_RC:
 			sprintf(output,"%s = getelementptr inbounds i32 %s, i32 %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
+		case GLOBAL_CONST:
+			sprintf(output,"@.%s = private unnamed_addr constant [%d x i8] c%s",stmnt->label_name,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case LABELL:
 			sprintf(output,"; <label>:%s \n",stmnt->label_name);
