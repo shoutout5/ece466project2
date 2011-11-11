@@ -254,21 +254,25 @@ void main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
 	HEAD=NULL;
 	current=NULL;
-	yyin = fopen(argv[1], "r"); 
-	yyparse();
-	printf("yyparse done\n");
-	current=HEAD;
-	FILE *fp = fopen("output.ll", "w");
-	if(fp == NULL)
-		printf("Could not open output file\n");
-	else  {
-		printf("in else\n");
-		while (current != NULL){
-			generate_llvm(current,fp);
-			current=current->next;
+	if (argc<3)
+		printf("Incorrect parameters. Please enter a destination file and source file");
+	else {
+		yyin = fopen(argv[2], "r"); 
+		yyparse();
+		printf("yyparse done\n");
+		current=HEAD;
+		FILE *fp = fopen(argv[1], "w");
+		if(fp == NULL)
+			printf("Could not open output file\n");
+		else  {
+			printf("in else\n");
+			while (current != NULL){
+				generate_llvm(current,fp);
+				current=current->next;
+			}
+		fclose(fp);
 		}
-	fclose(fp);
-	}
+      }
 }
 
 
