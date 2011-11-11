@@ -216,10 +216,12 @@ storePtr_stmt:	STORE I32 POINTER REG COMMA I32 POINTER REG
 								  storeStmt($7, param, STR_REG); }
 
 getelementptr:	REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 NUM
-								{ param_t param1; param_t param2; strcpy(param1.reg,$6); param2.imm=$9;
+								{ param_t param1; param_t param2;  char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
+									strcpy(param1.reg,tmp); param2.imm=$9;
 									getelementpointers(GEP_RC,$1, param1, param2);  }
 			| REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 REG
-								{ param_t param1; param_t param2; strcpy(param1.reg,$6); strcpy(param2.reg,$9);
+								{ param_t param1; param_t param2; char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
+								 strcpy(param1.reg,tmp); strcpy(param2.reg,$9);
 									getelementpointers(GEP_RR,$1,param1, param2); }
 
 ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");

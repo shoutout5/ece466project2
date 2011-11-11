@@ -76,10 +76,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"%s = icmp %s i32 %d, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case GEP_RR:
-			sprintf(output,"%s = getelementptr i32 %s, i32 %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = getelementptr inbounds i32 %s, i32 %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
 			break;
 		case GEP_RC:
-			sprintf(output,"%s = getelementptr i32 %s, i32 %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = getelementptr inbounds i32 %s, i32 %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
 			break;
 		case LABELL:
 			sprintf(output,"; <label>:%s \n",stmnt->label_name);
