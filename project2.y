@@ -115,12 +115,12 @@ stmt:	alloca_stmt         {  }
 alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { allocaStmt($1, 0, $4, NULL);  }
                 | REG EQUALS ALLOCA INT_TYPE COMMA INT_TYPE NUM         { allocaStmt($1, $7, $4, NULL); }
                 | REG EQUALS ALLOCA INT_TYPE COMMA ALIGN NUM            { allocaStmt($1, 0, $4, NULL);  }
-                | REG EQUALS ALLOCA INT_TYPE POINTER                    { strcat($4, $5); allocaStmt($1, 0, $4, NULL); }
-                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA INT_TYPE NUM { strcat($4, $5); allocaStmt($1, $8, $4, NULL); }
-                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); allocaStmt($1, 0, $4, NULL); }
+                | REG EQUALS ALLOCA INT_TYPE POINTER                    { char tmp[100]; sprintf(tmp,"%s%s",$4,$5); strcat($4, $5); allocaStmt($1, 0, tmp, NULL); }
+                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA INT_TYPE NUM { char tmp[100]; sprintf(tmp,"%s%s",$4,$5); allocaStmt($1, $8, tmp, NULL); }
+                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { char tmp[100]; sprintf(tmp,"%s%s",$4,$5); allocaStmt($1, 0, tmp, NULL); }
                 | REG EQUALS ALLOCA array_type                          { allocaStmt($1, 0, "", &$4); }
                 | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ allocaStmt($1, $7, $6, &$4); }
-                | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, NULL, &$4); }
+                | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, "", &$4); }
 
 label_stmt:	LABEL				{ labelStmt($1); }
 
@@ -257,49 +257,56 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE NUM COMMA REG
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
 load_stmt:	REG EQUALS LOAD INT_TYPE POINTER REG 
-								{ char tmp[150]; sprintf(tmp,"%s%s",$5,$6); 
+								{ char tmp[100]; sprintf(tmp,"%s%s",$4,$5); 
 									loadStmt($1, tmp); }
 
 			| REG EQUALS LOAD INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ loadStmt($1, $5); }
+								{ char tmp[100]; sprintf(tmp,"%s%s",$4,$5); 
+                                    loadStmt($1, tmp); }
 
 storeReg_stmt:	STORE INT_TYPE REG COMMA INT_TYPE POINTER REG 
-								{ param_t param;
+								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+                                  param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt($6, param, STR_REG); }
+								  storeStmt(tmp, param, STR_REG); }
 
                 | STORE INT_TYPE REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ param_t param;
+								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+                                  param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt($6, param, STR_REG); }
+								  storeStmt(tmp, param, STR_REG); }
 
 storeCon_stmt:	STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG 
-								{ param_t param;
+								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+                                  param_t param;
 								  param.imm = $3;
-								  storeStmt($6, param, STR_CONST); }
+								  storeStmt(tmp, param, STR_CONST); }
 
                 | STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ param_t param;
+								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+                                  param_t param;
 								  param.imm = $3;
 								  storeStmt($6, param, STR_CONST); }
 
 storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG 
-								{ param_t param;
-								  strcpy(param.reg, $3);
-								  storeStmt($7, param, STR_REG); }
+                                { char first[100], last[100]; sprintf(first,"%s%s",$2,$3); sprintf(last,"%s%s",$6,$7);
+                                  param_t param;
+								  strcpy(param.reg, $4);
+								  storeStmt($8, param, STR_REG); }
 
                 | STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ param_t param;
-								  strcpy(param.reg, $3);
-								  storeStmt($7, param, STR_REG); }
+								{ char first[100], last[100]; sprintf(first,"%s%s",$2,$3); sprintf(last,"%s%s",$6,$7);
+                                  param_t param;
+								  strcpy(param.reg, $4);
+								  storeStmt($8, param, STR_REG); }
 
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
-								{ param_t param1; param_t param2;  char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
-									strcpy(param1.reg,tmp); param2.imm=$9;
-									getelementpointers(GEP_RC,$1, param1, param2, );  }
+								{ char tmp[100]; param_t param1; param_t param2; 
+                                sprintf(param1.reg,"%s%s",$4,$5); param2.imm=$9;
+									getelementpointers(GEP_RC, $1, param1, param2);  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
-								{ param_t param1; param_t param2; char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
-								 strcpy(param1.reg,tmp); strcpy(param2.reg,$9);
+								{ param_t param1; param_t param2; char tmp[100]; 
+                                    sprintf(param1.reg,"%s%s",$4,$5); strcpy(param2.reg,$9);
 									getelementpointers(GEP_RR,$1,param1, param2); }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
 								{ 
@@ -560,6 +567,7 @@ void call(int type, char *defined, char *array_type, int num1, int num2, char * 
     
 	process_instruction(type,defined,&param1,&param2,array_type, NULL,arg_list);
 }
+
 
 
 
