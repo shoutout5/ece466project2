@@ -58,6 +58,7 @@ label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "c\"".*"\""					{ strcpy(yylval.reg, yytext); printf("STRING LITERAL\n"); return STR_LITERAL; }
 i1							{ printf("I1\n"); return I1; }
 i8							{ printf("I8\n"); return I8; }
+i16							{ printf("I16\n"); return I16; }
 i32							{ printf("I32\n"); return I32; }
 i64							{ printf("I64\n"); return I64; }
 \*+							{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
