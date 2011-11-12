@@ -1,6 +1,14 @@
 #ifndef DEFINES_H
 #define DEFINES_H
 
+#define RR (0)
+#define CC (1)
+#define RC (2)
+#define CR (3)
+#define CONST_VAL	(4)
+#define REG_VAL	(5)
+
+
 #define ADD_CC  1
 #define ADD_RR  2
 #define ADD_RC  3
@@ -15,10 +23,7 @@
 #define CMP_CR  16
 #define BR_UNCOND   11
 #define BR_COND     12
-#define RR (0)
-#define CC (1)
-#define RC (2)
-#define CR (3)
+
 #define STR_REG     18
 #define STR_CONST   19
 #define LABELL	20
@@ -31,6 +36,9 @@
 #define CALL_PRINTF 27
 #define CALL_SCANF 28
 #define ALLOC_ARRAY 29
+#define GEP_RRC 30
+#define GEP_RCC 31
+#define GEP_RCR 32
 
 typedef union {
 	int  imm;

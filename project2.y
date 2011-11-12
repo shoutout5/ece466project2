@@ -14,11 +14,11 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type);
 void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
 void return_stmt(char *return_type, param_t param);
-void getelementpointers(int type,char *defined, param_t param1, param_t param2);
+void getelementpointers(int type,char *defined, param_t param1, param_t param2, char **types);
 void global_constant(char *name,param_t num, param_t val);
 
-#define CONST_VAL	(4)
-#define REG_VAL	(5)
+char *type_arr[5];
+
 #define YYERROR_VERBOSE (1)
 
 %}
@@ -301,17 +301,17 @@ storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG
 								  storeStmt($8, param, STR_REG); }
 
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
-								{ char tmp[100]; param_t param1; param_t param2; 
-                                sprintf(param1.reg,"%s%s",$4,$5); param2.imm=$9;
-									getelementpointers(GEP_RC, $1, param1, param2);  }
+								{ char first[100]; param_t param1; param_t param2; 
+                              						 sprintf(first,"%s%s",$4,$5); param2.imm=$9; type_arr[0,1] = first, $8;// type_arr[1]=$8;
+									getelementpointers(GEP_RC, $1, param1, param2,type_arr);  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
-								{ param_t param1; param_t param2; char tmp[100]; 
-                                    sprintf(param1.reg,"%s%s",$4,$5); strcpy(param2.reg,$9);
-									getelementpointers(GEP_RR,$1,param1, param2); }
+								{ param_t param1; param_t param2; char first[100]; 
+                                				  sprintf(first,"%s%s",$4,$5); strcpy(param2.reg,$9); type_arr[0,1] = first,$8;
+									getelementpointers(GEP_RR,$1,param1, param2,type_arr); }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
 								{ 
 
-								 /*getelementpointers(GEP_RRC);*/ }
+								 /*getelementpointers(GEP_RRC,$1,);*/ }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
 								{ /*getelementpointers(GEP_RCC,)*/ }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
@@ -510,10 +510,10 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
     process_instruction(type, assignReg, &p1, &p2, comp, NULL, empty.reg);
 }
 
-void getelementpointers(int type,char *defined, param_t param1, param_t param2)
+void getelementpointers(int type,char *defined, param_t param1, param_t param2, char *array[])
 {
 	printf("___GEP ");
-	process_instruction(type, defined,&param1,&param2,NULL, NULL,"");
+	process_instruction(type, defined,&param1,&param2,NULL, array,"");
 
 }
 
