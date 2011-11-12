@@ -14,7 +14,7 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type);
 void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
 void return_stmt(char *return_type, param_t param);
-void getelementpointers(int type,char *defined, param_t param1, param_t param2, char **types);
+void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3, char **types);
 void global_constant(char *name,param_t num, param_t val);
 
 char *type_arr[5];
@@ -301,21 +301,26 @@ storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG
 								  storeStmt($8, param, STR_REG); }
 
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
-								{ char first[100]; param_t param1; param_t param2; 
+								{ char first[100]; param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
                               						 sprintf(first,"%s%s",$4,$5); param2.imm=$9; type_arr[0,1] = first, $8;// type_arr[1]=$8;
-									getelementpointers(GEP_RC, $1, param1, param2,type_arr);  }
+									getelementpointers(GEP_RC, $1, param1, param2, empty,type_arr);  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
-								{ param_t param1; param_t param2; char first[100]; 
-                                				  sprintf(first,"%s%s",$4,$5); strcpy(param2.reg,$9); type_arr[0,1] = first,$8;
-									getelementpointers(GEP_RR,$1,param1, param2,type_arr); }
+								{ param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
+                                				  strcat($4,$5); strcpy(param2.reg,$9); type_arr[0,1] = $4,$8;
+									getelementpointers(GEP_RR,$1,param1, param2, empty,type_arr); }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
-								{ 
-
-								 /*getelementpointers(GEP_RRC,$1,);*/ }
+								{ param_t param1; param_t param2; param_t param3; char array_str[50];
+                                				  strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); 
+								  type_arr[0,1,2] = $4,$8,$11; sprintf(param3.reg,"%d",$12);
+								  getelementpointers(GEP_RRC,$1,param1,param2,param3,type_arr); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
-								{ /*getelementpointers(GEP_RCC,)*/ }
+								{ param_t param1; param_t param2; param_t param3;  param3.imm=$12; char array_str[50];
+								strcpy(param1.reg,$6); param2.imm=$9; sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
+								type_arr[0,1,2] = array_str,$8,$11; getelementpointers(GEP_RCC,$1,param1,param2,param3,type_arr); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
-								{ /*getelementpointers(GEP_RCR)*/ }
+								{ /*param_t param1; param_t param2; param_t param3; param3.reg="fixme"; char array_str[50];
+									strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
+									type_arr[0,1,2] = array_str,$8,$11; getelementpointers(GEP_RCR,$1,param1,param2,param3,type_arr)*/ }
 
 ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 									return_stmt("void",empty); }
@@ -513,10 +518,10 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
     process_instruction(type, assignReg, &p1, &p2, comp, NULL, empty.reg);
 }
 
-void getelementpointers(int type,char *defined, param_t param1, param_t param2, char *array[])
+void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3,char *array[])
 {
 	printf("___GEP ");
-	process_instruction(type, defined,&param1,&param2,NULL, array,"");
+	process_instruction(type, defined,&param1,&param2,param3.reg, array,"");
 
 }
 

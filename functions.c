@@ -43,24 +43,36 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 	switch (stmnt->type){
             
 		case ADD_CC:
-			sprintf(output,"%s = add i32 %d, %d \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = add %s %d, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
 			break;
 		case ADD_RR:
-			sprintf(output,"%s = add i32 %s, %s \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = add %s %s, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
 			break;
 		case ADD_RC:
-			sprintf(output,"%s = add i32 %s, %d \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = add %s %s, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
 			break;
 		case ADD_CR:
-			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = add %s %d, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+			break;
+		case ADD_CC_NSW:
+			sprintf(output,"%s = add nsw %s %d, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+			break;
+		case ADD_RR_NSW:
+			sprintf(output,"%s = add nsw %s %s, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
+		case ADD_RC_NSW:
+			sprintf(output,"%s = add nsw %s %s, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
+		case ADD_CR_NSW:
+			sprintf(output,"%s = add nsw %s %d, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case ALLOC:
 			if(stmnt->arg1.imm == 0) {
-				sprintf(output,"%s = alloca i32 \n",stmnt->defined_regs);
+				sprintf(output,"%s = alloca %s \n",stmnt->defined_regs,stmnt->branch[0]);
 				break;
 			}
 			else {
-				sprintf(output,"%s = alloca i32, i32 %d \n",stmnt->defined_regs, stmnt->arg1.imm);
+				sprintf(output,"%s = alloca %s, %s %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->branch[1], stmnt->arg1.imm);
 				break;
 			}
 		case BR_UNCOND:
@@ -76,22 +88,34 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"%s = call i32 (i8*, ...)* @scanf(i8* getelementptr inbounds ([3 x i8]* @.str0, i32 0, i32 0), i32* %%a)",stmnt->defined_regs);
 			break;
 		case CMP_CC:
-			sprintf(output,"%s = icmp %s i32 %d, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = icmp %s %s %d, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
 			break;
 		case CMP_RR:
-			sprintf(output,"%s = icmp %s i32 %s, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = icmp %s %s %s, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
 			break;
 		case CMP_RC:
-			sprintf(output,"%s = icmp %s i32 %s, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = icmp %s %s %s, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
 			break;
 		case CMP_CR:
-			sprintf(output,"%s = icmp %s i32 %d, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = icmp %s %s %d, %s \n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case GEP_RR:
-			sprintf(output,"%s = getelementptr inbounds i32 %s, i32 %s",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = getelementptr inbounds %s %s, %s %s",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg);
 			break;
 		case GEP_RC:
-			sprintf(output,"%s = getelementptr inbounds i32 %s, i32 %d",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = getelementptr inbounds %s %s, %s %d",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.imm);
+			break;
+		case GEP_RCC:
+			sprintf(output,"%s = getelementptr inbounds %s %s, %s %d, %s %s",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.imm,stmnt->branch[2],stmnt->cmp);
+			break;
+		case GEP_RCR:
+			printf("Need to implement GEP_RCR");
+			break;
+		case GEP_RRC:
+			sprintf(output,"%s = getelementptr inbounds %s %s, %s %s, %s %s",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg,stmnt->branch[2],stmnt->cmp);
+			break;
+		case GEP_RRR:
+			printf("Need to implement GEP_RRR");
 			break;
 		case GLOBAL_CONST:
 			sprintf(output,"@.%s = private unnamed_addr constant [%d x i8] c%s",stmnt->label_name,stmnt->arg1.imm,stmnt->arg2.reg);
@@ -100,30 +124,41 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"; <label>:%s \n",stmnt->label_name);
 			break;
 		case LOADD:
-			sprintf(output,"%s = load i32* %s \n",stmnt->defined_regs,stmnt->arg1.reg);
+			sprintf(output,"%s = load %s %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg);
 			break;
 		case RETURN:
 			sprintf(output,"ret %s %s",stmnt->label_name,stmnt->arg1.reg);
 			break;
 		case STR_REG:
-			sprintf(output,"store i32 %s, i32* %s \n",stmnt->arg1.reg, stmnt->arg2.reg);
+			sprintf(output,"store %s %s, %s %s \n",stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg);
 			break;
 		case STR_CONST:
-			sprintf(output,"store i32 %d, i32* %s \n",stmnt->arg1.imm, stmnt->arg2.reg);
+			sprintf(output,"store %s %d, %s %s \n",stmnt->branch[0],stmnt->arg1.imm, stmnt->branch[1],stmnt->arg2.reg);
 			break;
 		case SUB_CC:
-			sprintf(output,"%s = sub i32 %d, %d \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
+			sprintf(output,"%s = sub %s %d, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
 			break;
 		case SUB_RR:
-			sprintf(output,"%s = sub i32 %s, %s \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.reg);
+			sprintf(output,"%s = sub %s %s, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
 			break;
 		case SUB_RC:
-			sprintf(output,"%s = sub i32 %s, %d \n",stmnt->defined_regs,stmnt->arg1.reg,stmnt->arg2.imm);
+			sprintf(output,"%s = sub %s %s, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
 			break;
 		case SUB_CR:
-			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = sub %s %d, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
-            
+ 		case SUB_CC_NSW:
+			sprintf(output,"%s = sub nsw %s %d, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+			break;
+		case SUB_RR_NSW:
+			sprintf(output,"%s = sub nsw %s %s, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+			break;
+		case SUB_RC_NSW:
+			sprintf(output,"%s = sub nsw %s %s, %d \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+			break;
+		case SUB_CR_NSW:
+			sprintf(output,"%s = sub nsw %s %d, %s \n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+			break;           
             
 		default: sprintf(output,"Failed to identify");
             
