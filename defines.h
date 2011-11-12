@@ -50,7 +50,7 @@ typedef struct node{
 
 typedef struct {
     int size;
-    char type[50];
+    char *type;
 } array_def;
 
 extern stmt *current;
