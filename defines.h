@@ -39,7 +39,7 @@ typedef union {
 
 typedef struct node{
 	int type;
-	char * defined_regs;
+	char defined_regs[50];
 	param_t arg1;
 	param_t arg2;
 	char *cmp;
