@@ -355,8 +355,8 @@ global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITE
 // portions of complex statments
 array_type:	LBRACKET NUM X INT_TYPE RBRACKET
 								{ printf("___Array Type: %d x %s\n\n", $2, $4);  
-                                  array_def contents; contents.size = $2; strcpy(contents.type, $4);
-                                  $$ = contents; }
+                                  array_def contents; contents.size = $2; contents.type = $4;
+                                  $$ = contents; printf("test\n");}
 
 comment:		COMMENT				{  }
 
@@ -526,11 +526,11 @@ void loadStmt(char *destReg, char *pointer)
 
 void storeStmt(char *dest, param_t param, int type)
 {
-	if(type == REG_VAL)
+	if(type == STR_REG)
 	{
 		printf("__store: %s <- %s\n\n", dest, param.reg);
 	}
-	else if(type == CONST_VAL)
+	else if(type == STR_CONST)
 	{
 		printf("__store: %s <- %d\n\n", dest, param.imm);
 	}
