@@ -26,7 +26,7 @@ char *type_arr[5];
 %union {
     int 	num;
     char	*string;
-    char	reg[50];
+    char	reg[100];
     array_def array_spec;
 }
 %expect 3
@@ -257,45 +257,45 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE NUM COMMA REG
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
 load_stmt:	REG EQUALS LOAD INT_TYPE POINTER REG 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$4,$5); 
-									loadStmt($1, tmp); }
+								{ strcat($4, $5);
+                                  loadStmt($1, $4); }
 
-			| REG EQUALS LOAD INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$4,$5); 
-                                    loadStmt($1, tmp); }
+                | REG EQUALS LOAD INT_TYPE POINTER REG COMMA ALIGN NUM 
+								{ strcat($4, $5);
+                                  loadStmt($1, $4); }
 
 storeReg_stmt:	STORE INT_TYPE REG COMMA INT_TYPE POINTER REG 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+								{ strcat($5,$6); 
                                   param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt(tmp, param, STR_REG); }
+								  storeStmt($5, param, STR_REG); }
 
                 | STORE INT_TYPE REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+								{ strcat($5,$6); 
                                   param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt(tmp, param, STR_REG); }
+								  storeStmt($5, param, STR_REG); }
 
 storeCon_stmt:	STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+								{ strcat($5,$6);
                                   param_t param;
 								  param.imm = $3;
-								  storeStmt(tmp, param, STR_CONST); }
+								  storeStmt($5, param, STR_CONST); }
 
                 | STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ char tmp[100]; sprintf(tmp,"%s%s",$5,$6); 
+								{ strcat($5,$6); 
                                   param_t param;
 								  param.imm = $3;
-								  storeStmt($6, param, STR_CONST); }
+								  storeStmt($5, param, STR_CONST); }
 
 storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG 
-                                { char first[100], last[100]; sprintf(first,"%s%s",$2,$3); sprintf(last,"%s%s",$6,$7);
+                                { strcat($2,$3); strcat($6,$7);
                                   param_t param;
 								  strcpy(param.reg, $4);
 								  storeStmt($8, param, STR_REG); }
 
                 | STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
-								{ char first[100], last[100]; sprintf(first,"%s%s",$2,$3); sprintf(last,"%s%s",$6,$7);
+								{ strcat($2,$3); strcat($6,$7);
                                   param_t param;
 								  strcpy(param.reg, $4);
 								  storeStmt($8, param, STR_REG); }
@@ -390,12 +390,15 @@ int main(int argc, char *argv[]) {
     }
 	else {
 		yyin = fopen(argv[2], "r"); 
+        if(yyin == NULL) {
+			printf("Error! Could not open input file for reading.\nPlease check your spelling and try again.\n");
+        }
 		yyparse();
 		printf("yyparse done\n");
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
-			printf("Error! Could not open output file for writing.\n");
+			printf("Error! Could not open output file for writing.\nPlease check your spelling and try again.\n");
         }
 		else  {
 			printf("in else\n");
