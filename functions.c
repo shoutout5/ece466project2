@@ -51,6 +51,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case ALLOC:
 			if(stmnt->arg1.imm == 0) {
 				sprintf(output,"%s = alloca i32 \n",stmnt->defined_regs);
+				printf("what %s");
 				break;
 			}
 			else {
