@@ -30,6 +30,7 @@
 #define GLOBAL_CONST 26
 #define CALL_PRINTF 27
 #define CALL_SCANF 28
+#define ALLOC_ARRAY 29
 
 typedef union {
 	int  imm;
@@ -49,7 +50,7 @@ typedef struct node{
 
 typedef struct {
     int size;
-    int type;
+    char *type;
 } array_def;
 
 extern stmt *current;

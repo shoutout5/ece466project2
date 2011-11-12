@@ -56,11 +56,11 @@ label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "{"							{ printf("LBRACE\n"); return LBRACE; }
 "}"							{ printf("RBRACE\n"); return RBRACE; }
 "c\"".*"\""					{ strcpy(yylval.reg, yytext); printf("STRING LITERAL\n"); return STR_LITERAL; }
-i1							{ printf("I1\n"); return I1; }
-i8							{ printf("I8\n"); return I8; }
-i32							{ printf("I32\n"); return I32; }
-i64							{ printf("I64\n"); return I64; }
-\*+							{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
+i1							{strcpy(yylval.reg, yytext);  printf("I1\n"); return INT_TYPE; }
+i8							{ strcpy(yylval.reg, yytext); printf("I8\n"); return INT_TYPE; }
+i32							{ strcpy(yylval.reg, yytext); printf("I32\n"); return INT_TYPE; }
+i64							{ strcpy(yylval.reg, yytext); printf("I64\n"); return INT_TYPE; }
+\*+							{ printf("POINTER , %s\n", &yytext[0]); return POINTER; }
 x							{ printf("X\n"); return X; }
 ","							{ printf("COMMA\n"); return COMMA; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
