@@ -118,7 +118,7 @@ alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { allocaStm
                 | REG EQUALS ALLOCA INT_TYPE POINTER                    { strcat($4, $5); allocaStmt($1, 0, $4, NULL); }
                 | REG EQUALS ALLOCA INT_TYPE POINTER COMMA INT_TYPE NUM { strcat($4, $5); allocaStmt($1, $8, $4, NULL); }
                 | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); allocaStmt($1, 0, $4, NULL); }
-                | REG EQUALS ALLOCA array_type                          { allocaStmt($1, 0, NULL, &$4); }
+                | REG EQUALS ALLOCA array_type                          { allocaStmt($1, 0, "", &$4); }
                 | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ allocaStmt($1, $7, $6, &$4); }
                 | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, NULL, &$4); }
 
@@ -296,17 +296,19 @@ storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
 								{ param_t param1; param_t param2;  char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
 									strcpy(param1.reg,tmp); param2.imm=$9;
-									getelementpointers(GEP_RC,$1, param1, param2);  }
+									getelementpointers(GEP_RC,$1, param1, param2, );  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
 								{ param_t param1; param_t param2; char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
 								 strcpy(param1.reg,tmp); strcpy(param2.reg,$9);
 									getelementpointers(GEP_RR,$1,param1, param2); }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
-								{ /*TODO*/ }
+								{ 
+
+								 getelementpointers(GEP_RRC);	 }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
-								{ /*TODO*/ }
+								{ getelementpointers(GEP_RCC,) }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
-								{ /*TODO*/ }
+								{ getelementpointers(GEP_RCR) }
 
 ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 									return_stmt("void",empty); }
