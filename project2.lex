@@ -39,8 +39,8 @@ br							{ printf("BR\n"); return BR; }
 sext							{ printf("SEXT\n"); return SEXT; }
 void							{ printf("VOID\n"); return VOID; }
 nsw							{ printf("NSW\n"); return NSW; }
-true							{ printf("TRUE\n"); return TRUE; }
-false						{ printf("FALSE\n"); return FALSE; }
+true						{ strcpy(yylval.reg, yytext); printf("TRUE\n"); return BOOLEAN; }
+false						{ strcpy(yylval.reg, yytext); printf("FALSE\n"); return BOOLEAN; }
 to							{ printf("TO\n"); return TO; }
 @scanf						{ printf("SCANF_CALL\n"); return SCANF_CALL; }
 @printf						{ printf("PRINTF_CALL\n"); return PRINTF_CALL; }
@@ -65,10 +65,11 @@ i64							{ strcpy(yylval.reg, yytext); printf("I64\n"); return INT_TYPE; }
 x							{ printf("X\n"); return X; }
 ","							{ printf("COMMA\n"); return COMMA; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
-"..."						{ printf("ELIPSIS\n"); return ELIPSIS; }
+"..."						{ printf("ELLIPSIS\n"); return ELLIPSIS; }
 " "							;
 ";".*"\n"						{ printf("COMMENT\n");  }
 "\n"							;
 .						 	{printf("UNKNOWN\n"); }
 %%
+
 

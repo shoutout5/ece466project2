@@ -8,15 +8,22 @@
 #define CONST_VAL	(4)
 #define REG_VAL	(5)
 
-
 #define ADD_CC  1
+#define ADD_CC_NSW 13
 #define ADD_RR  2
+#define ADD_RR_NSW 14
 #define ADD_RC  3
+#define ADD_RC_NSW 17
 #define ADD_CR  4
+#define ADD_CR_NSW 33
 #define SUB_CC  6
+#define SUB_CC_NSW 34
 #define SUB_RR  7
+#define SUB_RR_NSW 35
 #define SUB_RC  8
+#define SUB_RC_NSW 36
 #define SUB_CR  9
+#define SUB_CR_NSW 37
 #define CMP_CC  0
 #define CMP_RR  10
 #define CMP_RC  15
@@ -39,6 +46,7 @@
 #define GEP_RRC 30
 #define GEP_RCC 31
 #define GEP_RCR 32
+#define GEP_RRR 38
 
 typedef union {
 	int  imm;
@@ -65,6 +73,7 @@ extern stmt *current;
 extern stmt *HEAD;
 
 #endif
+
 
 
 
