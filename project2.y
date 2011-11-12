@@ -304,11 +304,11 @@ getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
 								{ 
 
-								 getelementpointers(GEP_RRC);	 }
+								 /*getelementpointers(GEP_RRC);*/ }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
-								{ getelementpointers(GEP_RCC,) }
+								{ /*getelementpointers(GEP_RCC,)*/ }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
-								{ getelementpointers(GEP_RCR) }
+								{ /*getelementpointers(GEP_RCR)*/ }
 
 ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 									return_stmt("void",empty); }
