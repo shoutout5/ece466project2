@@ -5,7 +5,7 @@
 
 
 int process_instruction(int type, char * defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
-		printf("starting");
+    printf("starting\n");
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	data->defined_regs = defined_regs;
@@ -18,24 +18,24 @@ int process_instruction(int type, char * defined_regs, param_t *arg1, param_t *a
 	else
 		strcpy(data->arg2.reg,arg2->reg);
 	strcpy(data->label_name,label_name);
-
+    
 	data->next=NULL;
 	if (current != NULL)
 		current->next=data;
 	if (HEAD == NULL)
 		HEAD=data;
 	current=data;
-	printf("finished");
+	printf("finished\n");
 	return 0;
 }
 
 
 
 void generate_llvm(stmt *stmnt, FILE *fp){
-
+    
 	char output[150];
 	switch (stmnt->type){
-
+            
 		case ADD_CC:
 			sprintf(output,"%s = add i32 %d, %d \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.imm);
 			break;
@@ -117,10 +117,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case SUB_CR:
 			sprintf(output,"%s = add i32 %d, %s \n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
-		
-		
+            
+            
 		default: sprintf(output,"Failed to identify");
-
+            
 	}
-   fprintf(fp,"%s",output);
+    fprintf(fp,"%s",output);
 }

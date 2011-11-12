@@ -1,4 +1,5 @@
 %{
+#include "defines.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -25,6 +26,9 @@ nounwind						{ printf("NOUNWIND\n"); return NOUNWIND; }
 private						{ printf("PRIVATE\n"); return PRIVATE; }
 unnamed_addr					{ printf("UNNAMED_ADDR\n"); return UNNAMED_ADDR; }
 constant						{ printf("CONSTANT\n"); return CONSTANT; }
+global						{ printf("GLOBAL\n"); return GLOBAL; }
+common						{ printf("COMMON\n"); return COMMON; }
+null							{ printf("NULL_KEYWORD\n"); return NULL_KEYWORD; }
 store						{ printf("STORE\n"); return STORE; }
 add							{ printf("ADD\n"); return ADD; }
 sub							{ printf("SUB\n"); return SUB; }
@@ -32,13 +36,17 @@ mul							{ printf("MUL\n"); return MUL; }
 div							{ printf("DIV\n"); return DIV; }
 ret							{ printf("RET\n"); return RET; }
 br							{ printf("BR\n"); return BR; }
+sext							{ printf("SEXT\n"); return SEXT; }
 void							{ printf("VOID\n"); return VOID; }
 nsw							{ printf("NSW\n"); return NSW; }
+true							{ printf("TRUE\n"); return TRUE; }
+false						{ printf("FALSE\n"); return FALSE; }
+to							{ printf("TO\n"); return TO; }
 @scanf						{ printf("SCANF_CALL\n"); return SCANF_CALL; }
 @printf						{ printf("PRINTF_CALL\n"); return PRINTF_CALL; }
 label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "="							{ printf("EQUALS\n"); return EQUALS; }
-"%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); printf("REG , %s\n", &yytext[1]); return REG; }
+"%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); printf("REG, %s\n", &yytext[1]); return REG; }
 [a-zA-Z0-9][a-zA-Z_0-9]*":"		{ strcpy(yylval.reg, yytext); printf("LABEL\n"); return LABEL; }
 "@"[a-zA-Z.][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
 "("							{ printf("LPAREN\n"); return LPAREN; }
@@ -51,6 +59,7 @@ label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 i1							{ printf("I1\n"); return I1; }
 i8							{ printf("I8\n"); return I8; }
 i32							{ printf("I32\n"); return I32; }
+i64							{ printf("I64\n"); return I64; }
 \*+							{ strcpy(yylval.reg, yytext); printf("POINTER , %s\n", &yytext[0]); return POINTER; }
 x							{ printf("X\n"); return X; }
 ","							{ printf("COMMA\n"); return COMMA; }
@@ -61,18 +70,3 @@ x							{ printf("X\n"); return X; }
 "\n"							;
 .						 	{printf("UNKNOWN\n"); }
 %%
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

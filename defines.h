@@ -47,10 +47,14 @@ typedef struct node{
 	struct node *next;
 } stmt;
 
+typedef struct {
+    int size;
+    int type;
+} array_def;
+
 extern stmt *current;
 extern stmt *HEAD;
 
 #endif
-
 
 

@@ -19,25 +19,29 @@ void global_constant(char *name,param_t num, param_t val);
 
 #define CONST_VAL	(4)
 #define REG_VAL	(5)
+#define YYERROR_VERBOSE (1)
 
 %}
 
 %union {
-  int 	num;
-  char	*string;
-  char	reg[50];
+    int 	num;
+    char	*string;
+    char	reg[50];
+    array_def array_spec;
 }
-%expect 4
+%expect 3
 
 %token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL DIV EQUALS REG LABEL
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
 	RPAREN LBRACKET RBRACKET LBRACE RBRACE I8 I32 POINTER X COMMA NUM ELIPSIS
 	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT I1 ICMP CMP_TYPE VOID NEWLINE
-	ALIGN STR_LITERAL SCANF_CALL PRINTF_CALL NSW
+	ALIGN STR_LITERAL SCANF_CALL PRINTF_CALL NSW I64 TRUE FALSE SEXT TO
+	GLOBAL COMMON NULL_KEYWORD
 
 %type <num> NUM
 %type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER
-%type <string> DEFINE
+%type <string> DEFINE param param_list
+%type <array_spec> array_type
 
 %% 
 
@@ -45,38 +49,38 @@ void global_constant(char *name,param_t num, param_t val);
 file:		content		{  }
 			| content file {  }
 
-content:		func_list		{  }
+content:	func_list		{  }
 			| global_list	{  }
 
 func_list: 	func_call
-			| func_call func_list
+			| func_list func_call 
 			
-func_call:	func_start  LBRACE stmt_list RBRACE
+func_call:	func_start LBRACE stmt_list RBRACE
 						{ printf("__function definition\n"); }
-			| func_start  NOUNWIND LBRACE stmt_list RBRACE
+			| func_start NOUNWIND LBRACE stmt_list RBRACE
+						{ printf("__function definition\n"); }
+            | func_start NOUNWIND_SSP LBRACE stmt_list RBRACE
 						{ printf("__function definition\n"); }
 
-func_start:	DEFINE I32 GLOBAL_DEF param_list		
+func_start:	DEFINE I32 GLOBAL_DEF LPAREN param_list	RPAREN	
 						{ printf("Function Header: %s\n", $1); }
-						
-			| DEFINE VOID GLOBAL_DEF param_list
+            | DEFINE I32 GLOBAL_DEF LPAREN RPAREN	
+						{ printf("Function Header: %s\n", $1); }
+			| DEFINE VOID GLOBAL_DEF LPAREN param_list RPAREN
+						{ printf("Function Header: %s\n", $1); }
+            | DEFINE VOID GLOBAL_DEF LPAREN RPAREN
 						{ printf("Function Header: %s\n", $1); }
 
-param_list:	LPAREN RPAREN
-			| LPAREN param_obj RPAREN
-			| LPAREN comma_list RPAREN
-
-comma_list:	param_obj COMMA param_obj
-			| comma_list COMMA I32 REG
-
-param_obj:	I32 REG
-			| I32 POINTER REG
-
+param_list: param {$$ = $1;}
+            | param_list COMMA param {$$ = strcat($1,$3);}
+            
+param:      I32 REG {$$ = $2;}
+            | I32 POINTER REG {$$ = $3;}
 			
 //----------------------------
 stmt_list:
 		stmt				{  }
-		| stmt stmt_list 	{  }
+		| stmt_list stmt 	{  }
 
 stmt:	alloca_stmt		{  }
 		| array_type		{  }
@@ -101,14 +105,21 @@ stmt:	alloca_stmt		{  }
 		| storePtr_stmt	{  }
 		| getelementptr	{  }
 		| ret_stmt		{  }
-		| scanf_call		{ printf("__________________________SCANF\n"); }
-		| printf_call		{ printf("__________________________PRINTF\n"); }
+		| sext_stmt		{  }
+		| scanf_call		{  }
+		| printf_call		{  }
 		| comment			{  }
-		
+        
 // statements
-alloca_stmt:	REG EQUALS ALLOCA I32           { allocaStmt($1, 0); }
-               | REG EQUALS ALLOCA I32 COMMA I32 NUM  	{ allocaStmt($1, $7); }
-			| REG EQUALS ALLOCA I32 COMMA ALIGN NUM 	{ allocaStmt($1, 0); }
+
+alloca_stmt:	REG EQUALS ALLOCA I32           				{ allocaStmt($1, 0); }
+               | REG EQUALS ALLOCA I32 COMMA I32 NUM  			{ allocaStmt($1, $7); }
+			| REG EQUALS ALLOCA I32 COMMA ALIGN NUM 		{ allocaStmt($1, 0); }
+			| REG EQUALS ALLOCA I32 POINTER COMMA I32 NUM  	{ allocaStmt($1, $8); }
+			| REG EQUALS ALLOCA I32 POINTER COMMA ALIGN NUM 	{ allocaStmt($1, 0); }
+            | REG EQUALS ALLOCA array_type                      { }
+			| REG EQUALS ALLOCA array_type COMMA I32 NUM		{ allocaStmt($1, $7); }
+			| REG EQUALS ALLOCA array_type COMMA ALIGN NUM 	{ allocaStmt($1, 0); }
 
 label_stmt:	LABEL				{ labelStmt($1); }
 
@@ -214,6 +225,11 @@ brUncond_stmt:	BR LABEL_KEYWORD REG
 
 brCond_stmt:	BR I1 REG COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
 								{ brCond($3, $6, $9); }
+			| BR I1 TRUE COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
+								{ brCond("true", $6, $9); }
+			| BR I1 FALSE COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
+								{ brCond("false", $6, $9); }
+			
 //----------------------------
 icmpRR_stmt:	REG EQUALS ICMP CMP_TYPE I32 REG COMMA REG
 								{ param_t reg1, reg2;
@@ -284,6 +300,16 @@ getelementptr:	REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 NUM
 								{ param_t param1; param_t param2; char tmp[50]; sprintf(tmp,"%s%s",$5,$6);
 								 strcpy(param1.reg,tmp); strcpy(param2.reg,$9);
 									getelementpointers(GEP_RR,$1,param1, param2); }
+			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA I32 NUM COMMA I32 NUM
+								{ /*TODO*/ }
+			| REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I32 REG COMMA I64 NUM
+								{ /*TODO*/ }
+			| REG EQUALS GEP_INBOUNDS I32 POINTER REG COMMA I64 NUM
+								{ /*TODO*/ }
+			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA I32 NUM COMMA I64 NUM
+								{ /*TODO*/ }
+			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA I32 NUM COMMA I64 REG
+								{ /*TODO*/ }
 
 ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 									return_stmt("void",empty); }
@@ -294,39 +320,49 @@ ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
 			| RET I32 POINTER REG 	{ 	param_t param; sprintf(param.reg,"%s%s",$3,$4);
 							return_stmt("i32",param); }
 
+sext_stmt:	REG EQUALS SEXT I32 REG TO I64
+								{ /*TODO*/ }
+
 //---------------------------
 
-scanf_call:	REG EQUALS CALL I32 call_pointer SCANF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA arg_list RPAREN
-								{ call(CALL_SCANF, $1, $12,$17,$20, $23) }
+scanf_call:	REG EQUALS CALL I32 call_pointer SCANF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA LPAREN param_list RPAREN
+								{ /*call(CALL_SCANF, $1, $12,$17,$20, $23)*/ }
 								
-printf_call:	REG EQUALS CALL I32 call_pointer PRINTF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA arg_list RPAREN
+printf_call: REG EQUALS CALL I32 call_pointer PRINTF_CALL LPAREN I8 POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA I32 NUM COMMA I32 NUM RPAREN COMMA LPAREN param_list RPAREN
 								{  }
 								
-call_pointer:	LPAREN I8 POINTER COMMA ELIPSIS RPAREN POINTER
+call_pointer: LPAREN I8 POINTER COMMA ELIPSIS RPAREN POINTER
 								{  }
-
-arg_list:		param_obj				{  }
-			| param_obj COMMA param_obj	{  }
-			| arg_list COMMA param_obj 	{  }
+                                
 //---------------------------
 
 //global statments
 global_list:	global_stmt				{  }
-			| global_stmt	global_list	{  }
+			| global_stmt global_list	{  }
 			
 global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITERAL
 									{ printf("_______global stmt\n"); 
-										param_t tmp1; strcpy(tmp1.reg,$7);
-										global_constant($1,param_t num, param_t val);
+										/*param_t tmp1; strcpy(tmp1.reg,"");
+										global_constant($1,param_t num, param_t val); TODO*/
 									}
+			| GLOBAL_DEF EQUALS COMMON GLOBAL I32 NUM COMMA ALIGN NUM
+									{ /*TODO*/ }
+			| GLOBAL_DEF EQUALS GLOBAL I32 POINTER GLOBAL_DEF COMMA ALIGN NUM
+									{ /*TODO*/ }
+			| GLOBAL_DEF EQUALS COMMON GLOBAL I32 POINTER NULL_KEYWORD COMMA ALIGN NUM
+									{ /*TODO*/ }
 			| DECLARE I32 SCANF_CALL LPAREN I8 POINTER COMMA ELIPSIS RPAREN	{  }
 			| DECLARE I32 PRINTF_CALL LPAREN I8 POINTER COMMA ELIPSIS RPAREN	{  }
 									
 // portions of complex statments
 array_type:	LBRACKET NUM X I32 RBRACKET
-								{ printf("___Array Type: %d x i32\n\n", $2); }
+								{ printf("___Array Type: %d x i32\n\n", $2);  
+                                  array_def contents; contents.size = $2; contents.type = I32;
+                                  $$ = contents; }
 			| LBRACKET NUM X I8 RBRACKET
-								{ printf("___Array Type: %d x i32\n\n", $2); }
+								{ printf("___Array Type: %d x i8\n\n", $2); 
+                                  array_def contents; contents.size = $2; contents.type = I8;
+                                  $$ = contents; }
 
 comment:		COMMENT				{  }
 
@@ -341,29 +377,33 @@ stmt *HEAD=NULL;
 stmt *current=NULL;
 param_t empty;
 
-void main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
 	HEAD=NULL;
 	current=NULL;
-	if (argc<3)
-		printf("Incorrect parameters. Please enter a destination file and source file");
+	if (argc<3) {
+        printf("Incorrect parameters.\n");
+        printf("project2 [outputfile] [inputfile]\n");
+    }
 	else {
 		yyin = fopen(argv[2], "r"); 
 		yyparse();
 		printf("yyparse done\n");
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
-		if(fp == NULL)
-			printf("Could not open output file\n");
+		if(fp == NULL) {
+			printf("Error! Could not open output file for writing.\n");
+        }
 		else  {
 			printf("in else\n");
 			while (current != NULL){
 				generate_llvm(current,fp);
 				current=current->next;
-			}
+            }
 		fclose(fp);
-		}
-      }
+        }
+    }
+    return 0;
 }
 
 
@@ -507,15 +547,18 @@ void return_stmt(char *return_type, param_t param)
 
 void call(int type, char *defined, char *array_type, int num1, int num2, char * arg_list)
 {
-	if (type == CALL_PRINTF)
+	param_t param1, param2; 
+    
+    if (type == CALL_PRINTF)
 		printf("____PRINTF");
 	else		
 		printf("____SCANF");
-	param_t param1; param1.imm=num1;
-	param_t param2; param2.imm=num2;
+    
+    param1.imm=num1;
+	param2.imm=num2;
+    
 	process_instruction(type,defined,&param1,&param2,array_type, NULL,arg_list);
 }
-
 
 
 
