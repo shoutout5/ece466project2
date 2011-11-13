@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "defines.h"
+#include "project2.y.h"
 
 extern char type_arr[5][100];
 
@@ -206,6 +207,9 @@ void generate_llvm(stmt *stmnt, FILE *fp){
         case RET_REG:
 			sprintf(output,"  ret %s %s\n",stmnt->label_name,stmnt->arg1.reg);
 			break;
+        case SEXT:
+            sprintf(output,"  %s = sext %s %s to %s\n",stmnt->defined_regs,stmnt->branch[0], stmnt->arg1.reg, stmnt->branch[1]);
+            break;
 		case STR_REG:
 			sprintf(output,"  store %s %s, %s %s\n",stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->defined_regs);
 			break;
@@ -261,12 +265,14 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 void register_promotion(stmt stmnt) {
 
 
+i
+
 
 }
 
 void dead_code(stmt stmnt){
-//char *used[];
-//char *def[];
+
+
 
 }
 
