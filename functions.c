@@ -196,6 +196,9 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case FUNC_END:
 			sprintf(output, "}\n\n");
 			break;
+        case GLOBAL_VAR:
+			sprintf(output, "%s = %s %d\n", stmnt->defined_regs, stmnt->label_name, stmnt->arg1.imm);
+			break;
             
 		default: sprintf(output,"Failed to identify \n");
             

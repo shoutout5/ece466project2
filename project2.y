@@ -666,7 +666,10 @@ void call(int type, char *defined, int arraySize, int num1, int num2, char *arg_
 
 void globalVar(char *name, char *typeData, int val)
 {
-	
+	param_t arg1, arg2;
+	arg1.imm = val;
+	arg2.imm = val;
+	process_instruction(GLOBAL_VAR, name, &arg1, &arg2, "", NULL, typeData);
 }
 
 
