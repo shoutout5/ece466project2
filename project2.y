@@ -14,7 +14,7 @@ void brCond(char *cond, char *trueLabel, char *falseLabel);
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type);
 void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
-void return_stmt(char *return_type, param_t param);
+void return_stmt(char *return_type, param_t param, int type);
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3);
 void global_constant(char *name, int size, char *strVal);
 void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list);
@@ -286,9 +286,11 @@ brUncond_stmt:	BR LABEL_KEYWORD REG
 								{ brUncond($3); }
 
 brCond_stmt:	BR INT_TYPE REG COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
-								{ strcpy(type_arr[0], $2); brCond($3, $6, $9); }
+								{ strcpy(type_arr[0], $2); strcpy(type_arr[1], $3); strcpy(type_arr[2], $6); strcpy(type_arr[3], $9); 
+                                    brCond($3, $6, $9); }
 			| BR INT_TYPE BOOLEAN COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
-								{ strcpy(type_arr[0], $2); brCond($3, $6, $9); }
+								{ strcpy(type_arr[0], $2); strcpy(type_arr[1], $3); strcpy(type_arr[2], $6); strcpy(type_arr[3], $9); 
+                                    brCond($3, $6, $9); }
 			
 //----------------------------
 icmpRR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE REG COMMA REG
@@ -397,14 +399,14 @@ getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
 									strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
 									type_arr[0,1,2] = array_str,$8,$11; getelementpointers(GEP_RCR,$1,param1,param2,param3)*/ }
 
-ret_stmt:		RET VOID				{ param_t empty; strcpy(empty.reg,"");
-                                          return_stmt("void",empty); }
-			| RET INT_TYPE NUM			{ param_t empty; strcpy(empty.reg,"");	 
-                                          return_stmt($2,empty); }
-			| RET INT_TYPE REG			{ param_t param; strcpy(param.reg, $3);
-                                          return_stmt($2,param); }
-            | RET INT_TYPE POINTER REG 	{ param_t param; sprintf(param.reg,"%s%s",$3,$4); strcat($2, $3);
-                                          return_stmt($2, param); }
+ret_stmt:		RET VOID                    { param_t empty; strcpy(empty.reg,"");
+                                            return_stmt("void",empty, RET_REG); }
+                | RET INT_TYPE NUM			{ param_t param; param.imm = $3; 
+                                            return_stmt($2, param, RET_NUM); }
+                | RET INT_TYPE REG			{ param_t param; strcpy(param.reg, $3);
+                                            return_stmt($2, param, RET_REG); }
+                | RET INT_TYPE POINTER REG 	{ param_t param; strcpy(param.reg, $4); strcat($2, $3);
+                                            return_stmt($2, param, RET_REG); }
 
 sext_stmt:	REG EQUALS SEXT INT_TYPE REG TO INT_TYPE
             { param_t old_type, new_type; strcpy(old_type.reg, $4); strcpy(new_type.reg, $7);
@@ -576,7 +578,7 @@ void brUncond(char *label)
 void brCond(char *cond, char *trueLabel, char *falseLabel)
 {
 	printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
-	char * arr[3] = {cond, trueLabel, falseLabel};
+	char *arr[3] = {cond, trueLabel, falseLabel};
 	process_instruction(BR_COND, NULL, &empty, &empty, NULL, NULL, empty.reg);
 }
 
@@ -641,10 +643,10 @@ void storeStmt(char *dest, param_t param, int type)
     process_instruction(type,dest,&param, &empty, NULL, NULL, empty.reg);
 }
 
-void return_stmt(char *return_type, param_t param)
+void return_stmt(char *return_type, param_t param, int type)
 {
 	printf("__return statement: %s ",return_type);
-	process_instruction(RETURN,empty.reg,&param,&empty,NULL, NULL, return_type);
+	process_instruction(type,empty.reg,&param,&empty,NULL, NULL, return_type);
 }
 
 void call(int type, char *defined, int arraySize, int num1, int num2, char *arg_list)

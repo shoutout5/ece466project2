@@ -53,6 +53,9 @@
 #define FUNC_DEC 42
 #define FUNC_END 43
 
+#define RET_NUM 44
+#define RET_REG 45
+
 typedef union {
 	int  imm;
 	char reg[100];
