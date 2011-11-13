@@ -84,7 +84,7 @@ typedef struct node{
 	param_t arg1;
 	param_t arg2;
 	char cmp[50];
-	char branch[5][100];
+	char branch[6][100];
 	char label_name[100];
 	struct node *next;
 } stmt;

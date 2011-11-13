@@ -4,9 +4,11 @@
 #include "defines.h"
 #include "project2.y.h"
 
-extern char type_arr[5][100];
+extern char type_arr[6][100];
 
 int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
+    int i;
+    
     printf("starting\n");
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
@@ -20,7 +22,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
 		data->arg1.imm=arg1->imm;
 	else
 		strcpy(data->arg1.reg,arg1->reg);
-	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC || type == ALLOC_ARRAY || type == CALL_SCANF || type == GEP_RC || type == GEP_RCC)
+	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC || type == ALLOC_ARRAY || type == CALL_SCANF || type == CALL_PRINTF || type == GEP_RC || type == GEP_RCC)
 		data->arg2.imm=arg2->imm;
 	else
 		strcpy(data->arg2.reg,arg2->reg);
@@ -29,8 +31,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
     if (cmp != NULL)
         strcpy(data->cmp, cmp);
     
-    int i;
-    for(i=0; i<5;i++)
+    for(i=0; i<=5; i++)
     {
 		if(type_arr[i] != NULL)
         {
@@ -90,7 +91,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 				break;
 			}
 		case ALLOC_ARRAY:
-				if(stmnt->arg1.imm == 0) {
+            if(stmnt->arg1.imm == 0) {
 				sprintf(output,"  %s = alloca %s\n",stmnt->defined_regs, stmnt->branch[0]);
 				break;
 			}
@@ -105,10 +106,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"  br %s %s, label %s, label %s\n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2],stmnt->branch[3]);
 			break;
 		case CALL_PRINTF:
-			sprintf(output,"  %s = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([%d x i8]* @.str0, i32 0, i32 0), %s)\n",stmnt->defined_regs, stmnt->arg1.imm, stmnt->label_name);
-			break;
+			sprintf(output,"  %s = call %s (%s, ...)* @printf(%s getelementptr inbounds (%s @.str0, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);			
+            break;
 		case CALL_SCANF:
-			sprintf(output,"  %s = call i32 (i8*, ...)* @scanf(i8* getelementptr inbounds ([%d x i8]* @.str0, i32 0, i32 0), %s)\n",stmnt->defined_regs, stmnt->arg1.imm, stmnt->label_name);
+			sprintf(output,"  %s = call %s (%s, ...)* @scanf(%s getelementptr inbounds (%s @.str0, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);	
 			break;
 		case CMP_CC:
 			sprintf(output,"  %s = icmp %s %s %d, %d\n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
@@ -122,30 +123,30 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case CMP_CR:
 			sprintf(output,"  %s = icmp %s %s %d, %s\n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
-                case SDIV_RR:
-                        sprintf(output,"  %s = sdiv %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
-                        break;
-                case SDIV_RC:
-                        sprintf(output,"  %s = sdiv %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
-                        break;
-                case SDIV_CR:
-                        sprintf(output,"  %s = sdiv %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
-                        break;
-                case SDIV_CC:
-                        sprintf(output,"  %s = sdiv %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
-                        break;
-                case SDIV_RR_NSW:
-                        sprintf(output,"  %s = sdiv nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
-                        break;
-                case SDIV_RC_NSW:
-                        sprintf(output,"  %s = sdiv nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
-                        break;
-                case SDIV_CR_NSW:
-                        sprintf(output,"  %s = sdiv nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
-                        break;
+        case SDIV_RR:
+            sprintf(output,"  %s = sdiv %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+            break;
+        case SDIV_RC:
+            sprintf(output,"  %s = sdiv %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+            break;
+        case SDIV_CR:
+            sprintf(output,"  %s = sdiv %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+            break;
+        case SDIV_CC:
+            sprintf(output,"  %s = sdiv %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+            break;
+        case SDIV_RR_NSW:
+            sprintf(output,"  %s = sdiv nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+            break;
+        case SDIV_RC_NSW:
+            sprintf(output,"  %s = sdiv nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+            break;
+        case SDIV_CR_NSW:
+            sprintf(output,"  %s = sdiv nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+            break;
 		case SDIV_CC_NSW:
-                        sprintf(output,"  %s = sdiv nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
-                        break;
+            sprintf(output,"  %s = sdiv nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+            break;
 		case GEP_RR:
 			sprintf(output,"  %s = getelementptr inbounds %s %s, %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg);
 			break;
@@ -156,7 +157,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"  %s = getelementptr inbounds %s %s, %s %d, %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.imm,stmnt->branch[2],stmnt->cmp);
 			break;
 		case GEP_RCR:
-			printf("Need to implement GEP_RCR\n");
+			sprintf(output,"  %s = getelementptr inbounds %s %s, %s %s, %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->cmp,stmnt->branch[2],stmnt->arg2.reg);
 			break;
 		case GEP_RRC:
 			sprintf(output,"  %s = getelementptr inbounds %s %s, %s %s, %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg,stmnt->branch[2],stmnt->cmp);
@@ -173,34 +174,30 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case LOADD:
 			sprintf(output,"  %s = load %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg);
 			break;
-		
-                case MUL_RR:
-                        sprintf(output,"  %s = mul  %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
-                        break;
-                case MUL_RC:
-                        sprintf(output,"  %s = mul %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
-                        break;
-                case MUL_CR:
-                        sprintf(output,"  %s = mul %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
-                        break;
-                case MUL_CC:
-                        sprintf(output,"  %s = mul %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
-                        break;
-                case MUL_RR_NSW:
-                        sprintf(output,"  %s = mul nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
-                        break;
-                case MUL_RC_NSW:
-                        sprintf(output,"  %s = mul nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
-                        break;
-                case MUL_CR_NSW:
-                        sprintf(output,"  %s = mul nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
-                        break;
-                case MUL_CC_NSW:
-                        sprintf(output,"  %s = mul nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
-                        break;
-
-
-
+        case MUL_RR:
+            sprintf(output,"  %s = mul  %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+            break;
+        case MUL_RC:
+            sprintf(output,"  %s = mul %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+            break;
+        case MUL_CR:
+            sprintf(output,"  %s = mul %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+            break;
+        case MUL_CC:
+            sprintf(output,"  %s = mul %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+            break;
+        case MUL_RR_NSW:
+            sprintf(output,"  %s = mul nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+            break;
+        case MUL_RC_NSW:
+            sprintf(output,"  %s = mul nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+            break;
+        case MUL_CR_NSW:
+            sprintf(output,"  %s = mul nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+            break;
+        case MUL_CC_NSW:
+            sprintf(output,"  %s = mul nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+            break;
 		case RET_NUM:
 			sprintf(output,"  ret %s %d\n",stmnt->label_name,stmnt->arg1.imm);
 			break;
@@ -271,17 +268,31 @@ while(current != NULL) {
 	if( current->type == ALLOC || current->type == GLOBAL_VAR ) {
  		strcpy(names[count++],current->defined_regs);
 	}
+	current=current->next;
 }
 int i;
 for (i=0; i<count; i++){
 	printf("name  %d: %s\n",i,names[i]);
 }
 
-current=current->next;
+
 }
 
-void dead_code(stmt stmnt){
+void dead_code(){
 
+current=HEAD;
+//stmnt *step=HEAD;
+char dead[100][50]; 
+
+while(current != NULL) {
+	if( current->defined_regs != NULL && strcmp(current->defined_regs,"") ) {
+ 		printf("defd found: %s\n",current->defined_regs);
+
+		//while(step->param1)
+
+	}
+	current=current->next;
+}
 
 
 }

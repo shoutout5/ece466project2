@@ -7,6 +7,7 @@
 #include "project2.y.h"
 %}
 
+%option yylineno
 
 %%
 "target datalayout =".*			{ printf("Target datalayout ignored\n"); }
@@ -68,7 +69,7 @@ x							{ printf("X\n"); return X; }
 "..."						{ printf("ELLIPSIS\n"); return ELLIPSIS; }
 " "							;
 ";".*"\n"						{ strcpy(yylval.reg, yytext); printf("COMMENT\n"); return COMMENT; }
-"\n"							;
+"\n"						; 
 .						 	{printf("UNKNOWN\n"); }
 %%
 
