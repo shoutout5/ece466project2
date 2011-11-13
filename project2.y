@@ -161,7 +161,7 @@ alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { strcpy(ty
                                                                           allocaStmt($1, $8, NULL); }
                 | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); strcpy(type_arr[0], $4); 
                                                                           allocaStmt($1, 0, NULL); }
-                | REG EQUALS ALLOCA array_type                          { allocaStmt($1, 0, &$4); }
+                | REG EQUALS ALLOCA array_type                          { sprintf(type_arr[0],"[%d x %s]",$4.size,$4.type); allocaStmt($1, 0, &$4); }
                 | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ strcpy(type_arr[0], $6); 
                                                                           allocaStmt($1, $7, &$4); }
                 | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, &$4); }
@@ -388,8 +388,8 @@ getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
 								  getelementpointers(GEP_RRC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
 								{ param_t param1; param_t param2; param_t param3; sprintf(param3.reg, "%d", $12); char array_str[100];
-								  strcpy(param1.reg,$6); param2.imm=$9; sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
-                                  strcpy(type_arr[0], array_str); strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
+								  strcpy(param1.reg,$6); param2.imm=$9; sprintf(type_arr[0],"[%d x %s]%s",$4.size,$4.type,$5);
+                                  strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
                                   getelementpointers(GEP_RCC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
 								{ /*param_t param1; param_t param2; param_t param3; param3.reg="fixme"; char array_str[50];
@@ -664,6 +664,7 @@ void globalVar(char *name, char *typeData, int val)
 {
 	
 }
+
 
 
 

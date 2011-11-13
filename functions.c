@@ -90,11 +90,11 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			}
 		case ALLOC_ARRAY:
 				if(stmnt->arg1.imm == 0) {
-				sprintf(output,"%s = alloca [%d x %s]\n",stmnt->defined_regs,stmnt->arg2.imm,stmnt->branch[0]);
+				sprintf(output,"%s = alloca %s\n",stmnt->defined_regs, stmnt->branch[0]);
 				break;
 			}
 			else {
-				sprintf(output,"%s = alloca [%d x %s], %s %d\n",stmnt->defined_regs,stmnt->arg2.imm,stmnt->branch[0],stmnt->branch[1], stmnt->arg1.imm);
+				sprintf(output,"%s = alloca %s, %s %d\n",stmnt->defined_regs, stmnt->branch[0],stmnt->branch[1], stmnt->arg1.imm);
 				break;
 			}
 		case BR_UNCOND:
@@ -188,10 +188,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output, "declare i32 @printf(i8*, ...)\n");
 			break;    
 		case FUNC_DEC:
-			sprintf(output, "%s{\n", stmnt->label_name);
+			sprintf(output, "\n%s{\n", stmnt->label_name);
 			break; 
 		case FUNC_END:
-			sprintf(output, "}\n");
+			sprintf(output, "}\n\n");
 			break;
             
 		default: sprintf(output,"Failed to identify \n");
@@ -199,5 +199,6 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 	}
     fprintf(fp,"%s",output);
 }
+
 
 
