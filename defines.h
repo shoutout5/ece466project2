@@ -48,6 +48,10 @@
 #define GEP_RCR 32
 #define GEP_RRR 38
 #define GLOBAL_VAR 39
+#define DEC_SCANF  40
+#define DEC_PRINTF 41
+#define FUNC_DEC 42
+#define FUNC_END 43
 
 typedef union {
 	int  imm;
@@ -59,21 +63,22 @@ typedef struct node{
 	char defined_regs[50];
 	param_t arg1;
 	param_t arg2;
-	char *cmp;
-	char *branch[5];
+	char cmp[50];
+	char branch[5][100];
 	char label_name[100];
 	struct node *next;
 } stmt;
 
 typedef struct {
     int size;
-    char *type;
+    char type[50];
 } array_def;
 
 extern stmt *current;
 extern stmt *HEAD;
 
 #endif
+
 
 
 

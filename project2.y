@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "functions.h"
 #include "defines.h"
 
@@ -19,7 +20,7 @@ void global_constant(char *name, int size, char *strVal);
 void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list);
 void globalVar(char *name, char *typeData, int val);
 
-char *type_arr[5];
+char type_arr[5][100];
 
 #define YYERROR_VERBOSE (1)
 
@@ -58,20 +59,48 @@ func_list: 	func_call
 			| func_list func_call 
 			
 func_call:	func_start LBRACE stmt_list RBRACE
-						{ printf("__function definition\n"); }
+						{ printf("__function definition\n"); 
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0;
+						  process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
 			| func_start NOUNWIND LBRACE stmt_list RBRACE
-						{ printf("__function definition\n"); }
-            | func_start NOUNWIND_SSP LBRACE stmt_list RBRACE
-						{ printf("__function definition\n"); }
+						{ printf("__function definition\n"); 
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0;
+						  process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
+            	| func_start NOUNWIND_SSP LBRACE stmt_list RBRACE
+						{ printf("__function definition\n"); 
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0;
+						  process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
 
 func_start:	DEFINE INT_TYPE GLOBAL_DEF LPAREN param_list	RPAREN	
-						{ printf("Function Header: %s\n", $1); }
-            | DEFINE INT_TYPE GLOBAL_DEF LPAREN RPAREN	
-						{ printf("Function Header: %s\n", $1); }
+						{ printf("Function Header: %s\n", $1);
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0; 
+						  process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
+            	| DEFINE INT_TYPE GLOBAL_DEF LPAREN RPAREN	
+						{ printf("Function Header: %s\n", $1);
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0; 
+						  process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
 			| DEFINE VOID GLOBAL_DEF LPAREN param_list RPAREN
-						{ printf("Function Header: %s\n", $1); }
-            | DEFINE VOID GLOBAL_DEF LPAREN RPAREN
-						{ printf("Function Header: %s\n", $1); }
+						{ printf("Function Header: %s\n", $1);
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0; 
+						  process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
+            	| DEFINE VOID GLOBAL_DEF LPAREN RPAREN
+						{ printf("Function Header: %s\n", $1);
+						  param_t arg1, arg2;
+						  arg1.imm = 0;
+						  arg2.imm = 0; 
+						  process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
 
 param_list: param {strcpy($$,$1); printf("________________________list1: %s\n", $$);}
             | param_list COMMA param {strcpy($$,strcat($1,", "));
@@ -119,20 +148,21 @@ stmt:	alloca_stmt         {  }
         
 // statements
 
-alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { type_arr[0] = $4; 
+alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { strcpy(type_arr[0], $4); 
                                                                           allocaStmt($1, 0, NULL);  }
-                | REG EQUALS ALLOCA INT_TYPE COMMA INT_TYPE NUM         { type_arr[0,1] = $4,$6; 
+                | REG EQUALS ALLOCA INT_TYPE COMMA INT_TYPE NUM         { strcpy(type_arr[0], $4);
+                                                                          strcpy(type_arr[1], $6); 
                                                                           allocaStmt($1, $7, NULL); }
-                | REG EQUALS ALLOCA INT_TYPE COMMA ALIGN NUM            { type_arr[0] = $4; 
+                | REG EQUALS ALLOCA INT_TYPE COMMA ALIGN NUM            { strcpy(type_arr[0], $4);
                                                                           allocaStmt($1, 0, NULL);  }
-                | REG EQUALS ALLOCA INT_TYPE POINTER                    { strcat($4, $5); type_arr[0] = $4;
+                | REG EQUALS ALLOCA INT_TYPE POINTER                    { strcat($4, $5); strcpy(type_arr[0], $4);
                                                                           allocaStmt($1, 0, NULL); }
-                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA INT_TYPE NUM { strcat($4, $5); type_arr[0,1] = $4,$7; 
+                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA INT_TYPE NUM { strcat($4, $5); strcpy(type_arr[0], $4); strcpy(type_arr[1], $7); 
                                                                           allocaStmt($1, $8, NULL); }
-                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); type_arr[0] = $4; 
+                | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); strcpy(type_arr[0], $4); 
                                                                           allocaStmt($1, 0, NULL); }
                 | REG EQUALS ALLOCA array_type                          { allocaStmt($1, 0, &$4); }
-                | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ type_arr[0] = $6; 
+                | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ strcpy(type_arr[0], $6); 
                                                                           allocaStmt($1, $7, &$4); }
                 | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, &$4); }
 
@@ -140,56 +170,56 @@ label_stmt:	LABEL				{ labelStmt($1); }
 
 addCC_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA NUM
 								{ param_t const1, const2;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
                                   const1.imm = $5;
 								  const2.imm = $7;
 								  add($1, const1, const2, ADD_CC); }
 								  
 			| REG EQUALS ADD NSW INT_TYPE NUM COMMA NUM
 								{ param_t const1, const2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  const1.imm = $6;
 								  const2.imm = $8;
 								  add($1, const1, const2, ADD_CC_NSW); }
 
 addRR_stmt:	REG EQUALS ADD INT_TYPE REG COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $5);
 								  strcpy(reg2.reg, $7);
 								  add($1, reg1, reg2, ADD_RR); }
 
 			| REG EQUALS ADD NSW INT_TYPE REG COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  strcpy(reg2.reg, $8);
 								  add($1, reg1, reg2, ADD_RR_NSW); }
 
 addRC_stmt:	REG EQUALS ADD INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $5);
 								  const1.imm = $7;
 								  add($1, reg1, const1, ADD_RR); }
 
 			| REG EQUALS ADD NSW INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  const1.imm = $8;
 								  add($1, reg1, const1, ADD_RR_NSW); }
 
 addCR_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA REG
 								{ param_t reg1, const1;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $7);
 								  const1.imm = $5;
 								  sub($1, reg1, const1, ADD_CR); }
 
 			| REG EQUALS ADD NSW INT_TYPE NUM COMMA REG
 								{ param_t reg1, const1;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $8);
 								  const1.imm = $6;
 								  sub($1, reg1, const1, ADD_CR_NSW); }
@@ -197,56 +227,56 @@ addCR_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA REG
 //----------------------------
 subCC_stmt:	REG EQUALS SUB INT_TYPE NUM COMMA NUM
 								{ param_t const1, const2;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  const1.imm = $5;
 								  const2.imm = $7;
 								  sub($1, const1, const2, SUB_CC); }
 
 			| REG EQUALS SUB NSW INT_TYPE NUM COMMA NUM
 								{ param_t const1, const2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  const1.imm = $6;
 								  const2.imm = $8;
 								  sub($1, const1, const2, SUB_CC_NSW); }
 
 subRR_stmt:	REG EQUALS SUB INT_TYPE REG COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $5);
 								  strcpy(reg2.reg, $7);
 								  sub($1, reg1, reg2, SUB_RR); }
 
 			| REG EQUALS SUB NSW INT_TYPE REG COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  strcpy(reg2.reg, $8);
 								  sub($1, reg1, reg2, SUB_RR_NSW); }
 
 subRC_stmt:	REG EQUALS SUB INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
-                                  type_arr[0] = $4;  
+                                  strcpy(type_arr[0], $4);  
 								  strcpy(reg1.reg, $5);
 								  const1.imm = $7;
 								  sub($1, reg1, const1, SUB_RR); }
 
 			| REG EQUALS SUB NSW INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  const1.imm = $8;
 								  sub($1, reg1, const1, SUB_RR_NSW); }
 
 subCR_stmt:	REG EQUALS SUB INT_TYPE NUM COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
 								  reg1.imm = $5;
 								  strcpy(reg2.reg, $7);
 								  sub($1, reg1, reg2, SUB_CR); }
 
 			| REG EQUALS SUB NSW INT_TYPE NUM COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  reg1.imm = $6;
 								  strcpy(reg2.reg, $8);
 								  sub($1, reg1, reg2, SUB_CR_NSW); }
@@ -255,108 +285,112 @@ brUncond_stmt:	BR LABEL_KEYWORD REG
 								{ brUncond($3); }
 
 brCond_stmt:	BR INT_TYPE REG COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
-								{ type_arr[0] = $2; brCond($3, $6, $9); }
+								{ strcpy(type_arr[0], $2); brCond($3, $6, $9); }
 			| BR INT_TYPE BOOLEAN COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
-								{ type_arr[0] = $2; brCond($3, $6, $9); }
+								{ strcpy(type_arr[0], $2); brCond($3, $6, $9); }
 			
 //----------------------------
 icmpRR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE REG COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  strcpy(reg2.reg, $8);
 								  cmpStmt($4, $1, reg1, reg2, CMP_RR); }
 
 icmpRC_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE REG COMMA NUM
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  reg2.imm = $8;
 								  cmpStmt($4, $1, reg1, reg2, CMP_RC); }
 
 icmpCC_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE NUM COMMA NUM
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5;
+                                  strcpy(type_arr[0], $5);
 								  reg1.imm = $6;
 								  reg2.imm = $8;
 								  cmpStmt($4, $1, reg1, reg2, CMP_CC); }
 
 icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE NUM COMMA REG
 								{ param_t reg1, reg2;
-                                  type_arr[0] = $5; 
+                                  strcpy(type_arr[0], $5); 
 								  reg1.imm = $6;
 								  strcpy(reg2.reg, $8);
 								  cmpStmt($4, $1, reg1, reg2, CMP_CR); }
 //----------------------------
 load_stmt:	REG EQUALS LOAD INT_TYPE POINTER REG 
 								{ strcat($4, $5);
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
                                   loadStmt($1, $4); }
 
                 | REG EQUALS LOAD INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($4, $5);
-                                  type_arr[0] = $4;
+                                  strcpy(type_arr[0], $4);
                                   loadStmt($1, $4); }
 
 storeReg_stmt:	STORE INT_TYPE REG COMMA INT_TYPE POINTER REG 
 								{ strcat($5,$6);
-                                  type_arr[0,1] = $2,$5;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  strcpy(param.reg, $3);
 								  storeStmt($5, param, STR_REG); }
 
                 | STORE INT_TYPE REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($5,$6); 
-                                  type_arr[0,1] = $2,$5;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  strcpy(param.reg, $3);
 								  storeStmt($5, param, STR_REG); }
 
 storeCon_stmt:	STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG 
 								{ strcat($5,$6);
-                                  type_arr[0,1] = $2,$5;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  param.imm = $3;
 								  storeStmt($5, param, STR_CONST); }
 
                 | STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($5,$6);
-                                  type_arr[0,1] = $2,$5;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  param.imm = $3;
 								  storeStmt($5, param, STR_CONST); }
 
 storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG 
                                 { strcat($2,$3); strcat($6,$7);
-                                  type_arr[0,1] = $2,$6;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $6);
                                   param_t param;
 								  strcpy(param.reg, $4);
 								  storeStmt($8, param, STR_REG); }
 
                 | STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($2,$3); strcat($6,$7);
-                                  type_arr[0,1] = $2,$6;
+                                  strcpy(type_arr[0], $2); strcpy(type_arr[1], $6);
                                   param_t param;
 								  strcpy(param.reg, $4);
 								  storeStmt($8, param, STR_REG); }
 
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
-								{ char first[100]; param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
-                              						 sprintf(first,"%s%s",$4,$5); param2.imm=$9; type_arr[0,1] = first, $8;// type_arr[1]=$8;
-									getelementpointers(GEP_RC, $1, param1, param2, empty);  }
+								{ param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
+                                  strcat($4,$5); param2.imm=$9;// type_arr[1]=$8;
+                                  strcpy(type_arr[0], $4); strcpy(type_arr[1], $8);
+								  getelementpointers(GEP_RC, $1, param1, param2, empty);  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
 								{ param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
-                                				  strcat($4,$5); strcpy(param2.reg,$9); type_arr[0,1] = $4,$8;
-									getelementpointers(GEP_RR,$1,param1, param2, empty); }
+                                  strcat($4,$5); strcpy(param2.reg,$9);
+                                  strcpy(type_arr[0], $4); strcpy(type_arr[1], $8);
+                                  getelementpointers(GEP_RR,$1,param1, param2, empty); }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG COMMA INT_TYPE NUM
 								{ param_t param1; param_t param2; param_t param3; char array_str[50];
-                                				  strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); 
-								  type_arr[0,1,2] = $4,$8,$11; sprintf(param3.reg,"%d",$12);
+                                  strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); 
+                                  strcpy(type_arr[0], $4); strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
+                                  sprintf(param3.reg,"%d",$12);
 								  getelementpointers(GEP_RRC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE NUM
-								{ param_t param1; param_t param2; param_t param3;  param3.imm=$12; char array_str[50];
-								strcpy(param1.reg,$6); param2.imm=$9; sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
-								type_arr[0,1,2] = array_str,$8,$11; getelementpointers(GEP_RCC,$1,param1,param2,param3); }
+								{ param_t param1; param_t param2; param_t param3; sprintf(param3.reg, "%d", $12); char array_str[100];
+								  strcpy(param1.reg,$6); param2.imm=$9; sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
+                                  strcpy(type_arr[0], array_str); strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
+                                  getelementpointers(GEP_RCC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
 								{ /*param_t param1; param_t param2; param_t param3; param3.reg="fixme"; char array_str[50];
 									strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
@@ -390,7 +424,7 @@ call_pointer: LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN POINTER
 
 //global statments
 global_list:	global_stmt				{  }
-			| global_stmt global_list	{  }
+			| global_list global_stmt	{  }
 			
 global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITERAL
 									{ printf("__global stmt\n");  
@@ -401,17 +435,23 @@ global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITE
 									  strcat(data, $5);
 									  printf("____________________here: %s\n", data);
 									  globalVar($1, data, $6); }
-			| GLOBAL_DEF EQUALS GLOBAL INT_TYPE POINTER GLOBAL_DEF COMMA ALIGN NUM
-									{ /*TODO*/ }
+			/*| GLOBAL_DEF EQUALS GLOBAL INT_TYPE POINTER GLOBAL_DEF COMMA ALIGN NUM
+									{  }
 			| GLOBAL_DEF EQUALS COMMON GLOBAL INT_TYPE POINTER NULL_KEYWORD COMMA ALIGN NUM
-									{ /*TODO*/ }
-			| DECLARE INT_TYPE SCANF_CALL LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN	{  }
-			| DECLARE INT_TYPE PRINTF_CALL LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN	{  }
+									{/ }*/
+			| DECLARE INT_TYPE SCANF_CALL LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN	
+									{ param_t arg1, arg2;
+									  arg1.imm = 0; arg2.imm = 0;
+									  process_instruction(DEC_SCANF, "", &arg1, &arg2, "", NULL, ""); }
+			| DECLARE INT_TYPE PRINTF_CALL LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN	
+									{ param_t arg1, arg2;
+									  arg1.imm = 0; arg2.imm = 0;
+									  process_instruction(DEC_PRINTF, "", &arg1, &arg2, "", NULL, ""); }
 									
 // portions of complex statments
 array_type:	LBRACKET NUM X INT_TYPE RBRACKET
 								{ printf("___Array Type: %d x %s\n\n", $2, $4);  
-                                  array_def contents; contents.size = $2; contents.type = $4;
+                                  array_def contents; contents.size = $2; strcpy(contents.type,$4);
                                   $$ = contents; printf("test\n");}
 
 comment:		COMMENT				{  }
@@ -467,10 +507,10 @@ void allocaStmt(char *reg, int size, array_def *contents)
 	tmp.imm = size;
     
     if (contents == NULL)
-        process_instruction(ALLOC, reg, &tmp, &empty, NULL, type_arr, "");
+        process_instruction(ALLOC, reg, &tmp, &empty, NULL, NULL, "");
     else {
         array_size.imm = contents->size;
-        process_instruction(ALLOC_ARRAY, reg, &tmp, &array_size, contents->type, type_arr, "");
+        process_instruction(ALLOC_ARRAY, reg, &tmp, &array_size, contents->type, NULL, "");
     }
 }
 
@@ -499,7 +539,7 @@ void add(char *reg, param_t p1, param_t p2, int type)
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
     
-    process_instruction(type, reg, &p1, &p2, NULL, type_arr, empty.reg);
+    process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
 void sub(char *reg, param_t p1, param_t p2, int type)
@@ -520,14 +560,14 @@ void sub(char *reg, param_t p1, param_t p2, int type)
 	{
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
-    process_instruction(type, reg, &p1, &p2, NULL, type_arr, empty.reg);
+    process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
 
 void brUncond(char *label)
 {
 	printf("__Branch: %s", &label[1]);
-	process_instruction(BR_UNCOND, NULL, &empty, &empty, NULL, type_arr, label);
+	process_instruction(BR_UNCOND, NULL, &empty, &empty, NULL, NULL, label);
 }
 
 
@@ -535,7 +575,7 @@ void brCond(char *cond, char *trueLabel, char *falseLabel)
 {
 	printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
 	char * arr[3] = {cond, trueLabel, falseLabel};
-	process_instruction(BR_COND, NULL, &empty, &empty, NULL, type_arr, empty.reg);
+	process_instruction(BR_COND, NULL, &empty, &empty, NULL, NULL, empty.reg);
 }
 
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
@@ -557,14 +597,13 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
 		printf("__CMP: %s <- %d %s %s\n\n", assignReg, p1.imm, comp, p2.reg);
 	}
     
-    process_instruction(type, assignReg, &p1, &p2, comp, type_arr, empty.reg);
+    process_instruction(type, assignReg, &p1, &p2, comp, NULL, empty.reg);
 }
 
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3)
 {
 	printf("___GEP ");
-	process_instruction(type, defined,&param1,&param2,param3.reg,type_arr,"");
-
+	process_instruction(type, defined,&param1,&param2,param3.reg,NULL,"");
 }
 
 void global_constant(char *name, int size, char *strVal)
@@ -582,7 +621,7 @@ void loadStmt(char *destReg, char *pointer)
 	param_t tmp;
 	strcpy(tmp.reg,pointer);
     
-    process_instruction(LOADD, destReg, &tmp, &empty, NULL, type_arr, empty.reg);
+    process_instruction(LOADD, destReg, &tmp, &empty, NULL, NULL, empty.reg);
 }
 
 
@@ -597,16 +636,16 @@ void storeStmt(char *dest, param_t param, int type)
 		printf("__store: %s <- %d\n\n", dest, param.imm);
 	}
     
-    process_instruction(type,dest,&param, &empty, NULL, type_arr, empty.reg);
+    process_instruction(type,dest,&param, &empty, NULL, NULL, empty.reg);
 }
 
 void return_stmt(char *return_type, param_t param)
 {
 	printf("__return statement: %s ",return_type);
-	process_instruction(RETURN,empty.reg,&param,&empty,NULL, type_arr, return_type);
+	process_instruction(RETURN,empty.reg,&param,&empty,NULL, NULL, return_type);
 }
 
-void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list)
+void call(int type, char *defined, int arraySize, int num1, int num2, char *arg_list)
 {
 	param_t param1, param2; 
     
@@ -625,6 +664,8 @@ void globalVar(char *name, char *typeData, int val)
 {
 	
 }
+
+
 
 
 
