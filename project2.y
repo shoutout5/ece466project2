@@ -9,6 +9,8 @@ void allocaStmt(char *reg, int size, array_def *contents);
 void labelStmt(char *name);
 void add(char *reg, param_t p1, param_t p2, int type);
 void sub(char *reg, param_t p1, param_t p2, int type);
+void mul(char *reg, param_t p1, param_t p2, int type);
+void sdiv(char *reg, param_t p1, param_t p2, int type);
 void brUncond(char *label);
 void brCond(char *cond, char *trueLabel, char *falseLabel);
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type);
@@ -35,7 +37,7 @@ char type_arr[5][100];
 }
 %expect 4
 
-%token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL DIV EQUALS REG LABEL
+%token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL SDIV EQUALS REG LABEL
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
 	RPAREN LBRACKET RBRACKET LBRACE RBRACE INT_TYPE POINTER X COMMA NUM ELLIPSIS
 	NOUNWIND_SSP LABEL_KEYWORD DECLARE COMMENT ICMP CMP_TYPE VOID NEWLINE
@@ -130,6 +132,14 @@ stmt:	alloca_stmt         {  }
 		| subRR_stmt		{  }
 		| subRC_stmt		{  }
 		| subCR_stmt		{  }
+        | mulCC_stmt		{  }
+		| mulRR_stmt		{  }
+		| mulRC_stmt		{  }
+		| mulCR_stmt		{  }
+        | sdivCC_stmt		{  }
+		| sdivRR_stmt		{  }
+		| sdivRC_stmt		{  }
+		| sdivCR_stmt		{  }
 		| brUncond_stmt     {  }
 		| brCond_stmt		{  }
 		| icmpRR_stmt		{  }
@@ -216,14 +226,14 @@ addCR_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA REG
                                   strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $7);
 								  const1.imm = $5;
-								  sub($1, reg1, const1, ADD_CR); }
+								  add($1, reg1, const1, ADD_CR); }
 
 			| REG EQUALS ADD NSW INT_TYPE NUM COMMA REG
 								{ param_t reg1, const1;
                                   strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $8);
 								  const1.imm = $6;
-								  sub($1, reg1, const1, ADD_CR_NSW); }
+								  add($1, reg1, const1, ADD_CR_NSW); }
 
 //----------------------------
 subCC_stmt:	REG EQUALS SUB INT_TYPE NUM COMMA NUM
@@ -282,6 +292,122 @@ subCR_stmt:	REG EQUALS SUB INT_TYPE NUM COMMA REG
 								  strcpy(reg2.reg, $8);
 								  sub($1, reg1, reg2, SUB_CR_NSW); }
 //----------------------------
+
+mulCC_stmt:	REG EQUALS MUL INT_TYPE NUM COMMA NUM
+								{ param_t const1, const2;
+                                  strcpy(type_arr[0], $4);
+                                  const1.imm = $5;
+								  const2.imm = $7;
+								  mul($1, const1, const2, MUL_CC); }
+								  
+			| REG EQUALS MUL NSW INT_TYPE NUM COMMA NUM
+								{ param_t const1, const2;
+                                  strcpy(type_arr[0], $5);
+								  const1.imm = $6;
+								  const2.imm = $8;
+								  mul($1, const1, const2, MUL_CC_NSW); }
+
+mulRR_stmt:	REG EQUALS MUL INT_TYPE REG COMMA REG
+								{ param_t reg1, reg2;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $5);
+								  strcpy(reg2.reg, $7);
+								  mul($1, reg1, reg2, MUL_RR); }
+
+			| REG EQUALS MUL NSW INT_TYPE REG COMMA REG
+								{ param_t reg1, reg2;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $6);
+								  strcpy(reg2.reg, $8);
+								  mul($1, reg1, reg2, MUL_RR_NSW); }
+
+mulRC_stmt:	REG EQUALS MUL INT_TYPE REG COMMA NUM
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $5);
+								  const1.imm = $7;
+                                  mul($1, reg1, const1, MUL_RC); }
+
+			| REG EQUALS MUL NSW INT_TYPE REG COMMA NUM
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $6);
+								  const1.imm = $8;
+								  mul($1, reg1, const1, MUL_RC_NSW); }
+
+mulCR_stmt:	REG EQUALS MUL INT_TYPE NUM COMMA REG
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $7);
+								  const1.imm = $5;
+                                  mul($1, reg1, const1, MUL_CR); }
+
+			| REG EQUALS MUL NSW INT_TYPE NUM COMMA REG
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $8);
+								  const1.imm = $6;
+								  mul($1, reg1, const1, MUL_CR_NSW); }
+//----------------------------
+
+sdivCC_stmt:	REG EQUALS SDIV INT_TYPE NUM COMMA NUM
+								{ param_t const1, const2;
+                                  strcpy(type_arr[0], $4);
+                                  const1.imm = $5;
+								  const2.imm = $7;
+								  sdiv($1, const1, const2, SDIV_CC); }
+								  
+			| REG EQUALS SDIV NSW INT_TYPE NUM COMMA NUM
+								{ param_t const1, const2;
+                                  strcpy(type_arr[0], $5);
+								  const1.imm = $6;
+								  const2.imm = $8;
+								  sdiv($1, const1, const2, SDIV_CC_NSW); }
+
+sdivRR_stmt:	REG EQUALS SDIV INT_TYPE REG COMMA REG
+								{ param_t reg1, reg2;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $5);
+								  strcpy(reg2.reg, $7);
+								  sdiv($1, reg1, reg2, SDIV_RR); }
+
+			| REG EQUALS SDIV NSW INT_TYPE REG COMMA REG
+								{ param_t reg1, reg2;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $6);
+								  strcpy(reg2.reg, $8);
+								  sdiv($1, reg1, reg2, SDIV_RR_NSW); }
+
+sdivRC_stmt:	REG EQUALS SDIV INT_TYPE REG COMMA NUM
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $5);
+								  const1.imm = $7;
+                                  sdiv($1, reg1, const1, SDIV_RC); }
+
+			| REG EQUALS SDIV NSW INT_TYPE REG COMMA NUM
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $6);
+								  const1.imm = $8;
+								  sdiv($1, reg1, const1, SDIV_RC_NSW); }
+
+sdivCR_stmt:	REG EQUALS SDIV INT_TYPE NUM COMMA REG
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $4);
+								  strcpy(reg1.reg, $7);
+								  const1.imm = $5;
+                                  sdiv($1, reg1, const1, SDIV_CR); }
+
+			| REG EQUALS SDIV NSW INT_TYPE NUM COMMA REG
+								{ param_t reg1, const1;
+                                  strcpy(type_arr[0], $5);
+								  strcpy(reg1.reg, $8);
+								  const1.imm = $6;
+								  sdiv($1, reg1, const1, SDIV_CR_NSW); }
+//----------------------------
+
+
 brUncond_stmt:	BR LABEL_KEYWORD REG
 								{ brUncond($3); }
 
@@ -410,7 +536,7 @@ ret_stmt:		RET VOID                    { param_t empty; strcpy(empty.reg,"");
 
 sext_stmt:	REG EQUALS SEXT INT_TYPE REG TO INT_TYPE
             { param_t old_type, new_type; strcpy(old_type.reg, $4); strcpy(new_type.reg, $7);
-              process_instruction(SEXT, $1, &old_type, &new_type, $5, NULL, NULL); }
+              process_instruction(SEXT, $1, &old_type, &new_type, $5, NULL, ""); }
 
 //---------------------------
 
@@ -540,7 +666,7 @@ void add(char *reg, param_t p1, param_t p2, int type)
 	}
 	else if(type == ADD_CR || type == ADD_CR_NSW)
 	{
-		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+		printf("__Add: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
     
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
@@ -567,6 +693,49 @@ void sub(char *reg, param_t p1, param_t p2, int type)
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
+void mul(char *reg, param_t p1, param_t p2, int type)
+{
+	if(type == MUL_CC || type == MUL_CC_NSW)
+	{
+		printf("__Mul: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
+	}
+	else if(type == MUL_RR || type == MUL_RR_NSW)
+	{
+		printf("__Mul: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
+	}
+	else if(type == MUL_RR || type == MUL_RR_NSW)
+	{
+		printf("__Mul: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
+	}
+	else if(type == MUL_CR || type == MUL_CR_NSW)
+	{
+		printf("__Mul: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+	}
+    
+    process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
+}
+
+void sdiv(char *reg, param_t p1, param_t p2, int type)
+{
+	if(type == SDIV_CC || type == SDIV_CC_NSW)
+	{
+		printf("__Sdiv: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
+	}
+	else if(type == SDIV_RR || type == SDIV_RR_NSW)
+	{
+		printf("__Sdiv: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
+	}
+	else if(type == SDIV_RR || type == SDIV_RR_NSW)
+	{
+		printf("__Sdiv: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
+	}
+	else if(type == SDIV_CR || type == SDIV_CR_NSW)
+	{
+		printf("__Sdiv: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+	}
+    
+    process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
+}
 
 void brUncond(char *label)
 {

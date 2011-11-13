@@ -56,6 +56,23 @@
 #define RET_NUM 44
 #define RET_REG 45
 
+#define MUL_CC  46
+#define MUL_CC_NSW 47
+#define MUL_RR  48
+#define MUL_RR_NSW 49
+#define MUL_RC  50
+#define MUL_RC_NSW 51
+#define MUL_CR  52
+#define MUL_CR_NSW 53
+#define SDIV_CC  54
+#define SDIV_CC_NSW 55
+#define SDIV_RR  56
+#define SDIV_RR_NSW 57
+#define SDIV_RC  58
+#define SDIV_RC_NSW 59
+#define SDIV_CR  60
+#define SDIV_CR_NSW 61
+
 typedef union {
 	int  imm;
 	char reg[100];

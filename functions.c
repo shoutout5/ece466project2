@@ -121,6 +121,30 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case CMP_CR:
 			sprintf(output,"  %s = icmp %s %s %d, %s\n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
+                case SDIV_RR:
+                        sprintf(output,"  %s = sdiv %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+                        break;
+                case SDIV_RC:
+                        sprintf(output,"  %s = sdiv %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+                        break;
+                case SDIV_CR:
+                        sprintf(output,"  %s = sdiv %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+                        break;
+                case SDIV_CC:
+                        sprintf(output,"  %s = sdiv %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+                        break;
+                case SDIV_RR_NSW:
+                        sprintf(output,"  %s = sdiv nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+                        break;
+                case SDIV_RC_NSW:
+                        sprintf(output,"  %s = sdiv nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+                        break;
+                case SDIV_CR_NSW:
+                        sprintf(output,"  %s = sdiv nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+                        break;
+		case SDIV_CC_NSW:
+                        sprintf(output,"  %s = sdiv nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+                        break;
 		case GEP_RR:
 			sprintf(output,"  %s = getelementptr inbounds %s %s, %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg);
 			break;
@@ -148,6 +172,34 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 		case LOADD:
 			sprintf(output,"  %s = load %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg);
 			break;
+		
+                case MUL_RR:
+                        sprintf(output,"  %s = mul  %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+                        break;
+                case MUL_RC:
+                        sprintf(output,"  %s = mul %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+                        break;
+                case MUL_CR:
+                        sprintf(output,"  %s = mul %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+                        break;
+                case MUL_CC:
+                        sprintf(output,"  %s = mul %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+                        break;
+                case MUL_RR_NSW:
+                        sprintf(output,"  %s = mul nsw %s %s, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.reg);
+                        break;
+                case MUL_RC_NSW:
+                        sprintf(output,"  %s = mul nsw %s %s, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg,stmnt->arg2.imm);
+                        break;
+                case MUL_CR_NSW:
+                        sprintf(output,"  %s = mul nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
+                        break;
+                case MUL_CC_NSW:
+                        sprintf(output,"  %s = mul nsw %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
+                        break;
+
+
+
 		case RET_NUM:
 			sprintf(output,"  ret %s %d\n",stmnt->label_name,stmnt->arg1.imm);
 			break;
@@ -206,5 +258,20 @@ void generate_llvm(stmt *stmnt, FILE *fp){
     fprintf(fp,"%s",output);
 }
 
+void register_promotion(stmt stmnt) {
 
+
+
+}
+
+void dead_code(stmt stmnt){
+//char *used[];
+//char *def[];
+
+}
+
+void ssa_form(stmt stmnt){
+
+
+}
 

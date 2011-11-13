@@ -33,7 +33,7 @@ store						{ printf("STORE\n"); return STORE; }
 add							{ printf("ADD\n"); return ADD; }
 sub							{ printf("SUB\n"); return SUB; }
 mul							{ printf("MUL\n"); return MUL; }
-div							{ printf("DIV\n"); return DIV; }
+sdiv							{ printf("SDIV\n"); return SDIV; }
 ret							{ printf("RET\n"); return RET; }
 br							{ printf("BR\n"); return BR; }
 sext							{ printf("SEXT\n"); return SEXT; }
