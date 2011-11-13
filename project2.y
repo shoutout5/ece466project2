@@ -19,6 +19,7 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2, 
 void global_constant(char *name, int size, char *strVal);
 void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list);
 void globalVar(char *name, char *typeData, int val);
+void commentLabel(char *text);
 
 char type_arr[5][100];
 
@@ -32,7 +33,7 @@ char type_arr[5][100];
     char	reg[100];
     array_def array_spec;
 }
-%expect 3
+%expect 4
 
 %token ALLOCA CALL GEP_INBOUNDS LOAD STORE ADD SUB MUL DIV EQUALS REG LABEL
 	DEFINE NOUNWIND	PRIVATE UNNAMED_ADDR CONSTANT RET BR GLOBAL_DEF LPAREN
@@ -42,7 +43,7 @@ char type_arr[5][100];
 	GLOBAL COMMON NULL_KEYWORD
 
 %type <num> NUM
-%type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER INT_TYPE param param_list STR_LITERAL BOOLEAN
+%type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER INT_TYPE param param_list STR_LITERAL BOOLEAN COMMENT
 %type <string> DEFINE
 %type <array_spec> array_type
 
@@ -162,9 +163,9 @@ alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { strcpy(ty
                 | REG EQUALS ALLOCA INT_TYPE POINTER COMMA ALIGN NUM    { strcat($4, $5); strcpy(type_arr[0], $4); 
                                                                           allocaStmt($1, 0, NULL); }
                 | REG EQUALS ALLOCA array_type                          { sprintf(type_arr[0],"[%d x %s]",$4.size,$4.type); allocaStmt($1, 0, &$4); }
-                | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ strcpy(type_arr[0], $6); 
+                | REG EQUALS ALLOCA array_type COMMA INT_TYPE NUM		{ sprintf(type_arr[0],"[%d x %s]",$4.size,$4.type); strcpy(type_arr[1], $6); 
                                                                           allocaStmt($1, $7, &$4); }
-                | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { allocaStmt($1, 0, &$4); }
+                | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { sprintf(type_arr[0],"[%d x %s]",$4.size,$4.type); allocaStmt($1, 0, &$4); }
 
 label_stmt:	LABEL				{ labelStmt($1); }
 
@@ -201,14 +202,14 @@ addRC_stmt:	REG EQUALS ADD INT_TYPE REG COMMA NUM
                                   strcpy(type_arr[0], $4);
 								  strcpy(reg1.reg, $5);
 								  const1.imm = $7;
-								  add($1, reg1, const1, ADD_RR); }
+								  add($1, reg1, const1, ADD_RC); }
 
 			| REG EQUALS ADD NSW INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
                                   strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  const1.imm = $8;
-								  add($1, reg1, const1, ADD_RR_NSW); }
+								  add($1, reg1, const1, ADD_RC_NSW); }
 
 addCR_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA REG
 								{ param_t reg1, const1;
@@ -258,14 +259,14 @@ subRC_stmt:	REG EQUALS SUB INT_TYPE REG COMMA NUM
                                   strcpy(type_arr[0], $4);  
 								  strcpy(reg1.reg, $5);
 								  const1.imm = $7;
-								  sub($1, reg1, const1, SUB_RR); }
+								  sub($1, reg1, const1, SUB_RC); }
 
 			| REG EQUALS SUB NSW INT_TYPE REG COMMA NUM
 								{ param_t reg1, const1;
                                   strcpy(type_arr[0], $5);
 								  strcpy(reg1.reg, $6);
 								  const1.imm = $8;
-								  sub($1, reg1, const1, SUB_RR_NSW); }
+								  sub($1, reg1, const1, SUB_RC_NSW); }
 
 subCR_stmt:	REG EQUALS SUB INT_TYPE NUM COMMA REG
 								{ param_t reg1, reg2;
@@ -321,40 +322,40 @@ icmpCR_stmt:	REG EQUALS ICMP CMP_TYPE INT_TYPE NUM COMMA REG
 load_stmt:	REG EQUALS LOAD INT_TYPE POINTER REG 
 								{ strcat($4, $5);
                                   strcpy(type_arr[0], $4);
-                                  loadStmt($1, $4); }
+                                  loadStmt($1, $6); }
 
                 | REG EQUALS LOAD INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($4, $5);
                                   strcpy(type_arr[0], $4);
-                                  loadStmt($1, $4); }
+                                  loadStmt($1, $6); }
 
 storeReg_stmt:	STORE INT_TYPE REG COMMA INT_TYPE POINTER REG 
 								{ strcat($5,$6);
                                   strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt($5, param, STR_REG); }
+								  storeStmt($7, param, STR_REG); }
 
                 | STORE INT_TYPE REG COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($5,$6); 
                                   strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  strcpy(param.reg, $3);
-								  storeStmt($5, param, STR_REG); }
+								  storeStmt($7, param, STR_REG); }
 
 storeCon_stmt:	STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG 
 								{ strcat($5,$6);
                                   strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  param.imm = $3;
-								  storeStmt($5, param, STR_CONST); }
+								  storeStmt($7, param, STR_CONST); }
 
                 | STORE INT_TYPE NUM COMMA INT_TYPE POINTER REG COMMA ALIGN NUM 
 								{ strcat($5,$6);
                                   strcpy(type_arr[0], $2); strcpy(type_arr[1], $5);
                                   param_t param;
 								  param.imm = $3;
-								  storeStmt($5, param, STR_CONST); }
+								  storeStmt($7, param, STR_CONST); }
 
 storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG 
                                 { strcat($2,$3); strcat($6,$7);
@@ -372,7 +373,7 @@ storePtr_stmt:	STORE INT_TYPE POINTER REG COMMA INT_TYPE POINTER REG
 
 getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
 								{ param_t param1; param_t param2; param_t empty; strcpy(empty.reg,"");
-                                  strcat($4,$5); param2.imm=$9;// type_arr[1]=$8;
+                                    strcat($4,$5); param2.imm=$9; strcpy(param1.reg, $6);
                                   strcpy(type_arr[0], $4); strcpy(type_arr[1], $8);
 								  getelementpointers(GEP_RC, $1, param1, param2, empty);  }
 			| REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE REG
@@ -447,6 +448,7 @@ global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITE
 									{ param_t arg1, arg2;
 									  arg1.imm = 0; arg2.imm = 0;
 									  process_instruction(DEC_PRINTF, "", &arg1, &arg2, "", NULL, ""); }
+			| comment					{  }
 									
 // portions of complex statments
 array_type:	LBRACKET NUM X INT_TYPE RBRACKET
@@ -454,7 +456,7 @@ array_type:	LBRACKET NUM X INT_TYPE RBRACKET
                                   array_def contents; contents.size = $2; strcpy(contents.type,$4);
                                   $$ = contents; printf("test\n");}
 
-comment:		COMMENT				{  }
+comment:		COMMENT				{ commentLabel($1); }
 
 
 %%
@@ -522,19 +524,19 @@ void labelStmt(char *name)
 
 void add(char *reg, param_t p1, param_t p2, int type)
 {
-	if(type == ADD_CC)
+	if(type == ADD_CC || type == ADD_CC_NSW)
 	{
 		printf("__Add: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
 	}
-	else if(type == ADD_RR)
+	else if(type == ADD_RR || type == ADD_RR_NSW)
 	{
 		printf("__Add: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
 	}
-	else if(type == ADD_RR)
+	else if(type == ADD_RR || type == ADD_RR_NSW)
 	{
 		printf("__Add: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
 	}
-	else if(type == ADD_CR)
+	else if(type == ADD_CR || type == ADD_CR_NSW)
 	{
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
@@ -544,19 +546,19 @@ void add(char *reg, param_t p1, param_t p2, int type)
 
 void sub(char *reg, param_t p1, param_t p2, int type)
 {
-	if(type == SUB_CC)
+	if(type == SUB_CC || type == SUB_CC_NSW)
 	{
 		printf("__Sub: %s <- %d - %d\n\n", reg, p1.imm, p2.imm);
 	}
-	else if(type == SUB_RR)
+	else if(type == SUB_RR || type == SUB_RR_NSW)
 	{
 		printf("__Sub: %s <- %s - %s\n\n", reg, p1.reg, p2.reg);
 	}
-	else if(type == SUB_RR)
+	else if(type == SUB_RR || type == SUB_RR_NSW)
 	{
 		printf("__Sub: %s <- %s - %d\n\n", reg, p1.reg, p2.imm);
 	}
-	else if(type == SUB_CR)
+	else if(type == SUB_CR || type == SUB_CR_NSW)
 	{
 		printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
 	}
@@ -666,6 +668,11 @@ void globalVar(char *name, char *typeData, int val)
 }
 
 
+void commentLabel(char *text)
+{
+	if(!strncmp(text,"; <label>:", 10))
+		labelStmt(&text[10]);
+}
 
 
 

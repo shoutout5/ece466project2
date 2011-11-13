@@ -47,7 +47,7 @@ to							{ printf("TO\n"); return TO; }
 label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "="							{ printf("EQUALS\n"); return EQUALS; }
 "%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); printf("REG, %s\n", &yytext[1]); return REG; }
-[a-zA-Z0-9][a-zA-Z_0-9]*":"		{ strcpy(yylval.reg, yytext); printf("LABEL\n"); return LABEL; }
+"; <label>:"[a-zA-Z0-9][a-zA-Z_0-9]*	{ strcpy(yylval.reg, yytext); printf("LABEL\n"); return LABEL; }
 "@"[a-zA-Z.][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
 "("							{ printf("LPAREN\n"); return LPAREN; }
 ")"							{ printf("RPAREN\n"); return RPAREN; }
@@ -67,7 +67,7 @@ x							{ printf("X\n"); return X; }
 [0-9]+						{ yylval.num=atoi(yytext); printf("NUM\n"); return NUM; }
 "..."						{ printf("ELLIPSIS\n"); return ELLIPSIS; }
 " "							;
-";".*"\n"						{ printf("COMMENT\n");  }
+";".*"\n"						{ strcpy(yylval.reg, yytext); printf("COMMENT\n"); return COMMENT; }
 "\n"							;
 .						 	{printf("UNKNOWN\n"); }
 %%

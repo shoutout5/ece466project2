@@ -55,7 +55,7 @@
 
 typedef union {
 	int  imm;
-	char reg[50];
+	char reg[100];
 } param_t;
 
 typedef struct node{

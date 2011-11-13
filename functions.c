@@ -143,7 +143,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"%s = private unnamed_addr constant [%d x i8] %s\n",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case LABELL:
-			sprintf(output,"; <label>:%s\n",stmnt->label_name);
+			sprintf(output,"\n; <label>:%s\n",stmnt->label_name);
 			break;
 		case LOADD:
 			sprintf(output,"%s = load %s %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.reg);
@@ -152,10 +152,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"ret %s %s\n",stmnt->label_name,stmnt->arg1.reg);
 			break;
 		case STR_REG:
-			sprintf(output,"store %s %s, %s %s\n",stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->arg2.reg);
+			sprintf(output,"store %s %s, %s %s\n",stmnt->branch[0],stmnt->arg1.reg,stmnt->branch[1],stmnt->defined_regs);
 			break;
 		case STR_CONST:
-			sprintf(output,"store %s %d, %s %s\n",stmnt->branch[0],stmnt->arg1.imm, stmnt->branch[1],stmnt->arg2.reg);
+			sprintf(output,"store %s %d, %s %s\n",stmnt->branch[0],stmnt->arg1.imm, stmnt->branch[1],stmnt->defined_regs);
 			break;
 		case SUB_CC:
 			sprintf(output,"%s = sub %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
