@@ -19,7 +19,7 @@ void storeStmt(char *dest, param_t param, int type);
 void return_stmt(char *return_type, param_t param, int type);
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3);
 void global_constant(char *name, int size, char *strVal);
-void call(int type, char *defined, param_t param1, param_t param2, char *arg_list);
+void call(int type, char *defined, param_t param1, param_t param2, char *globdef_used, char *arg_list);
 void globalVar(char *name, char *typeData, int val);
 void commentLabel(char *text);
 
@@ -522,8 +522,8 @@ getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
                                   strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
                                   getelementpointers(GEP_RCC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
-								{ param_t param1; param_t param2; param_t param3; char array_str[50]; sprintf(param3.reg,"%d",$9);
-								  strcpy(param1.reg,$6); sprintf(param2.reg,"d",$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
+								{ param_t param1; param_t param2; param_t param3; char array_str[50]; sprintf(param3.reg,"%s",$12);
+								  strcpy(param1.reg,$6); sprintf(param2.reg,"%d",$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
 								  strcpy(type_arr[0],array_str); strcpy(type_arr[1],$8); strcpy(type_arr[2],$11); 
 								  getelementpointers(GEP_RCR,$1,param1,param2,param3) }
 
@@ -546,12 +546,12 @@ sext_stmt:	REG EQUALS SEXT INT_TYPE REG TO INT_TYPE
 scanf_call:	REG EQUALS CALL INT_TYPE call_pointer SCANF_CALL LPAREN INT_TYPE POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA INT_TYPE NUM COMMA INT_TYPE NUM RPAREN COMMA param_list RPAREN
 								{ param_t num1, num2; num1.imm = $17, num2.imm = $20; strcat($8, $9); strcpy(type_arr[0], $4); strcpy(type_arr[1], $5); strcpy(type_arr[2], $8);
                                   sprintf(type_arr[3],"[%d x %s]%s", $12.size, $12.type, $13); strcpy(type_arr[4], $16); strcpy(type_arr[5], $19);
-                                  call(CALL_SCANF, $1, num1, num2, $23); }
+                                  call(CALL_SCANF, $1, num1, num2, $14, $23); }
 								
 printf_call: REG EQUALS CALL INT_TYPE call_pointer PRINTF_CALL LPAREN INT_TYPE POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA INT_TYPE NUM COMMA INT_TYPE NUM RPAREN COMMA param_list RPAREN
 								{ param_t num1, num2; num1.imm = $17, num2.imm = $20; strcat($8, $9); strcpy(type_arr[0], $4); strcpy(type_arr[1], $5); strcpy(type_arr[2], $8);
                                   sprintf(type_arr[3],"[%d x %s]%s", $12.size, $12.type, $13); strcpy(type_arr[4], $16); strcpy(type_arr[5], $19);
-                                  call(CALL_PRINTF, $1, num1, num2, $23); }
+                                  call(CALL_PRINTF, $1, num1, num2, $14, $23); }
 								
 call_pointer: LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN POINTER
 								{ strcat($2, $3); strcpy($$, $2); }
@@ -833,14 +833,14 @@ void return_stmt(char *return_type, param_t param, int type)
 	process_instruction(type,empty.reg,&param,&empty,NULL, NULL, return_type);
 }
 
-void call(int type, char *defined, param_t param1, param_t param2, char *arg_list)
+void call(int type, char *defined, param_t param1, param_t param2, char *globdef_used, char *arg_list)
 {    
     if (type == CALL_PRINTF)
 		printf("____PRINTF");
 	else		
 		printf("____SCANF");
     
-	process_instruction(type, defined, &param1, &param2, NULL, NULL, arg_list);
+	process_instruction(type, defined, &param1, &param2, globdef_used, NULL, arg_list);
 }
 
 void globalVar(char *name, char *typeData, int val)

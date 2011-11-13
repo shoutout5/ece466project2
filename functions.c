@@ -18,7 +18,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
 	else
 		strcpy(data->defined_regs,"");
 		
-	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST || type == ALLOC_ARRAY || type == CALL_PRINTF || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST || type == ALLOC_ARRAY || type == CALL_SCANF || type == GLOBAL_CONST || type == RET_NUM)
+	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == STR_CONST || type == ALLOC_ARRAY || type == CALL_PRINTF || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == ALLOC_ARRAY || type == CALL_SCANF || type == GLOBAL_CONST || type == RET_NUM)
 		data->arg1.imm=arg1->imm;
 	else
 		strcpy(data->arg1.reg,arg1->reg);
@@ -100,16 +100,16 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 				break;
 			}
 		case BR_UNCOND:
-			sprintf(output,"  br label %s \n",stmnt->label_name);
+			sprintf(output,"  br label %s\n",stmnt->label_name);
 			break;
 		case BR_COND:
 			sprintf(output,"  br %s %s, label %s, label %s\n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2],stmnt->branch[3]);
 			break;
 		case CALL_PRINTF:
-			sprintf(output,"  %s = call %s (%s, ...)* @printf(%s getelementptr inbounds (%s @.str0, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);			
+			sprintf(output,"  %s = call %s (%s, ...)* @printf(%s getelementptr inbounds (%s %s, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->cmp, stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);			
             break;
 		case CALL_SCANF:
-			sprintf(output,"  %s = call %s (%s, ...)* @scanf(%s getelementptr inbounds (%s @.str0, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);	
+			sprintf(output,"  %s = call %s (%s, ...)* @scanf(%s getelementptr inbounds (%s %s, %s %d, %s %d), %s)\n", stmnt->defined_regs, stmnt->branch[0], stmnt->branch[1], stmnt->branch[2], stmnt->branch[3], stmnt->cmp, stmnt->branch[4], stmnt->arg1.imm, stmnt->branch[5], stmnt->arg2.imm, stmnt->label_name);	
 			break;
 		case CMP_CC:
 			sprintf(output,"  %s = icmp %s %s %d, %d\n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
@@ -238,13 +238,13 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"  %s = sub nsw %s %d, %s\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.reg);
 			break;   
 		case DEC_SCANF:
-			sprintf(output, "declare i32 @scanf(i8*, ...)\n");
+			sprintf(output, "declare i32 @scanf(i8*, ...)\n\n");
 			break;
 		case DEC_PRINTF:   
-			sprintf(output, "declare i32 @printf(i8*, ...)\n");
+			sprintf(output, "declare i32 @printf(i8*, ...)\n\n");
 			break;    
 		case FUNC_DEC:
-			sprintf(output, "\n%s{\n", stmnt->label_name);
+			sprintf(output, "\n%s {\n", stmnt->label_name);
 			break; 
 		case FUNC_END:
 			sprintf(output, "}\n\n");
@@ -279,7 +279,7 @@ for (i=0; i<count; i++){
 }
 
 void dead_code(){
-
+/*
 current=HEAD;
 //stmnt *step=HEAD;
 char dead[100][50]; 
@@ -287,14 +287,25 @@ char dead[100][50];
 while(current != NULL) {
 	if( current->defined_regs != NULL && strcmp(current->defined_regs,"") ) {
  		printf("defd found: %s\n",current->defined_regs);
+	
+		while(step=>next != NULL){
+			if (type != SUB_CC || type != SUB_CR || type != ADD_CC || type != ADD_CR || type != CMP_CC || type != CMP_CR || type != ALLOC_ARRAY || type != CALL_PRINTF || type != ADD_CR || type != CMP_CC || type != CMP_CR || type != STR_CONST || type != ALLOC_ARRAY || type != CALL_SCANF || type != GLOBAL_CONST || type != RET_NUM){
+								
+			}
 
-		//while(step->param1)
+			if (type != SUB_CC || type != SUB_RC || type != ADD_CC || type != ADD_RC || type != CMP_CC || type != CMP_RC || type != ALLOC_ARRAY || type != CALL_SCANF || type != CALL_PRINTF || type != GEP_RC || type != GEP_RCC) {
+
+			}
+			
+		}
+		
+		
 
 	}
 	current=current->next;
 }
 
-
+*/
 }
 
 void ssa_form(stmt stmnt){
