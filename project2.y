@@ -15,7 +15,9 @@ void loadStmt(char *destReg, char *pointer);
 void storeStmt(char *dest, param_t param, int type);
 void return_stmt(char *return_type, param_t param);
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3);
-void global_constant(char *name,param_t num, param_t val);
+void global_constant(char *name, int size, char *strVal);
+void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list);
+void globalVar(char *name, char *typeData, int val);
 
 char *type_arr[5];
 
@@ -39,8 +41,8 @@ char *type_arr[5];
 	GLOBAL COMMON NULL_KEYWORD
 
 %type <num> NUM
-%type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER INT_TYPE BOOLEAN
-%type <string> DEFINE param param_list
+%type <reg> REG LABEL GLOBAL_DEF CMP_TYPE POINTER INT_TYPE param param_list STR_LITERAL BOOLEAN
+%type <string> DEFINE
 %type <array_spec> array_type
 
 %% 
@@ -71,11 +73,16 @@ func_start:	DEFINE INT_TYPE GLOBAL_DEF LPAREN param_list	RPAREN
             | DEFINE VOID GLOBAL_DEF LPAREN RPAREN
 						{ printf("Function Header: %s\n", $1); }
 
-param_list: param {$$ = $1;}
-            | param_list COMMA param {$$ = strcat($1,$3);}
+param_list: param {strcpy($$,$1); printf("________________________list1: %s\n", $$);}
+            | param_list COMMA param {strcpy($$,strcat($1,", "));
+            					   strcpy($$,strcat($$,$3)); 
+            					   printf("________________________list2: %s\n", $$);}
             
-param:      INT_TYPE REG {$$ = $2;}
-            | INT_TYPE POINTER REG {$$ = $3;}
+param:      INT_TYPE REG {strcpy($$,strcat($1," ")); 
+					 strcpy($$,strcat($1,$2)); printf("________________________param1: %s\n", $$);}
+            | INT_TYPE POINTER REG {strcpy($$,strcat($1,$2));
+            					 strcpy($$,strcat($$," "));
+            					 strcpy($$,strcat($$,$3)); printf("________________________param2: %s\n", $$);}
 			
 //----------------------------
 stmt_list:
@@ -371,10 +378,10 @@ sext_stmt:	REG EQUALS SEXT INT_TYPE REG TO INT_TYPE
 //---------------------------
 
 scanf_call:	REG EQUALS CALL INT_TYPE call_pointer SCANF_CALL LPAREN INT_TYPE POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA INT_TYPE NUM COMMA INT_TYPE NUM RPAREN COMMA param_list RPAREN
-								{ /*call(CALL_SCANF, $1, $12,$17,$20, $23)*/ }
+								{ call(CALL_SCANF, $1, $12.size,$17,$20, $23); }
 								
 printf_call: REG EQUALS CALL INT_TYPE call_pointer PRINTF_CALL LPAREN INT_TYPE POINTER GEP_INBOUNDS LPAREN array_type POINTER GLOBAL_DEF COMMA INT_TYPE NUM COMMA INT_TYPE NUM RPAREN COMMA param_list RPAREN
-								{  }
+								{ call(CALL_PRINTF, $1, $12.size,$17,$20, $23); }
 								
 call_pointer: LPAREN INT_TYPE POINTER COMMA ELLIPSIS RPAREN POINTER
 								{  }
@@ -386,12 +393,14 @@ global_list:	global_stmt				{  }
 			| global_stmt global_list	{  }
 			
 global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITERAL
-									{ printf("_______global stmt\n"); 
-										/*param_t tmp1; strcpy(tmp1.reg,"");
-										global_constant($1,param_t num, param_t val); TODO*/
-									}
+									{ printf("__global stmt\n");  
+									  global_constant($1, $6.size, $7); }
 			| GLOBAL_DEF EQUALS COMMON GLOBAL INT_TYPE NUM COMMA ALIGN NUM
-									{ /*TODO*/ }
+									{ char data[50];
+									  strcpy(data, "common global ");
+									  strcat(data, $5);
+									  printf("____________________here: %s\n", data);
+									  globalVar($1, data, $6); }
 			| GLOBAL_DEF EQUALS GLOBAL INT_TYPE POINTER GLOBAL_DEF COMMA ALIGN NUM
 									{ /*TODO*/ }
 			| GLOBAL_DEF EQUALS COMMON GLOBAL INT_TYPE POINTER NULL_KEYWORD COMMA ALIGN NUM
@@ -468,7 +477,7 @@ void allocaStmt(char *reg, int size, array_def *contents)
 void labelStmt(char *name)
 {
 	printf("__Label %s\n", name);
- 	process_instruction(LABELL, NULL, &empty, &empty, NULL, type_arr, name);
+ 	process_instruction(LABELL, NULL, &empty, &empty, NULL, NULL, name);
 }
 
 void add(char *reg, param_t p1, param_t p2, int type)
@@ -558,10 +567,13 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2, 
 
 }
 
-void global_constant(char *name, param_t num, param_t val)
+void global_constant(char *name, int size, char *strVal)
 {
+	param_t value, sizeParam;
 	printf("____GBL_CONST");
-	process_instruction(GLOBAL_CONST, "", &num, &val, NULL, type_arr, name);
+	strcpy(value.reg, strVal);
+	sizeParam.imm = size;
+	process_instruction(GLOBAL_CONST,name,&sizeParam,&value,"",NULL,"");
 }
 
 void loadStmt(char *destReg, char *pointer)
@@ -594,7 +606,7 @@ void return_stmt(char *return_type, param_t param)
 	process_instruction(RETURN,empty.reg,&param,&empty,NULL, type_arr, return_type);
 }
 
-void call(int type, char *defined, char *array_type, int num1, int num2, char * arg_list)
+void call(int type, char *defined, int arraySize, int num1, int num2, char * arg_list)
 {
 	param_t param1, param2; 
     
@@ -603,11 +615,25 @@ void call(int type, char *defined, char *array_type, int num1, int num2, char * 
 	else		
 		printf("____SCANF");
     
-    param1.imm=num1;
-	param2.imm=num2;
+    param1.imm=arraySize;
+	param2.imm=arraySize;
     
-	process_instruction(type, defined, &param1, &param2, array_type, type_arr, arg_list);
+	process_instruction(type,defined,&param1,&param2,NULL, NULL,arg_list);
 }
+
+void globalVar(char *name, char *typeData, int val)
+{
+	
+}
+
+
+
+
+
+
+
+
+
 
 
 

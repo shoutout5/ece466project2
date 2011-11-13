@@ -9,22 +9,29 @@ int process_instruction(int type, char * defined_regs, param_t *arg1, param_t *a
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	
-	printf("______________-------------______________ orig: %s\n",defined_regs);
 	if(defined_regs != NULL)
 		strcpy(data->defined_regs, defined_regs);
 	else
 		strcpy(data->defined_regs,"");
-	printf("______________-------------______________ copy: %s\n",data->defined_regs);
-	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST || type == ALLOC_ARRAY )
+		
+	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST || type == ALLOC_ARRAY || type == CALL_PRINTF || type == ADD_CR || type == CMP_CC || type == CMP_CR || STR_CONST || type == ALLOC_ARRAY || type == CALL_SCANF || type == GLOBAL_CONST)
 		data->arg1.imm=arg1->imm;
 	else
 		strcpy(data->arg1.reg,arg1->reg);
-	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC || type == ALLOC_ARRAY )
+	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC || type == ALLOC_ARRAY || type == ALLOC_ARRAY || type == CALL_SCANF)
 		data->arg2.imm=arg2->imm;
 	else
 		strcpy(data->arg2.reg,arg2->reg);
 	strcpy(data->label_name,label_name);
     
+	if(branch !=NULL)
+	{
+		int i;
+		for(i=0; i<5;i++)
+			if(data->branch[i] != NULL)
+				strcpy(data->branch[i],branch[i]);
+	}
+
 	data->next=NULL;
 	if (current != NULL)
 		current->next=data;
@@ -82,10 +89,10 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			sprintf(output,"br i1 %s, label %s, label %s \n",stmnt->branch[0],stmnt->branch[1],stmnt->branch[2]);
 			break;
 		case CALL_PRINTF:
-			sprintf(output,"%s = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([4 x i8]* @.str0, i32 0, i32 0), i32 %%r9)",stmnt->defined_regs);
+			sprintf(output,"%s = call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([%d x i8]* @.str0, i32 0, i32 0), %s)\n",stmnt->defined_regs, stmnt->arg1.imm, stmnt->label_name);
 			break;
 		case CALL_SCANF:
-			sprintf(output,"%s = call i32 (i8*, ...)* @scanf(i8* getelementptr inbounds ([3 x i8]* @.str0, i32 0, i32 0), i32* %%a)",stmnt->defined_regs);
+			sprintf(output,"%s = call i32 (i8*, ...)* @scanf(i8* getelementptr inbounds ([%d x i8]* @.str0, i32 0, i32 0), %s)\n",stmnt->defined_regs, stmnt->arg1.imm, stmnt->label_name);
 			break;
 		case CMP_CC:
 			sprintf(output,"%s = icmp %s %s %d, %d \n",stmnt->defined_regs,stmnt->cmp,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
@@ -118,7 +125,7 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 			printf("Need to implement GEP_RRR");
 			break;
 		case GLOBAL_CONST:
-			sprintf(output,"@.%s = private unnamed_addr constant [%d x i8] c%s",stmnt->label_name,stmnt->arg1.imm,stmnt->arg2.reg);
+			sprintf(output,"%s = private unnamed_addr constant [%d x i8] %s",stmnt->defined_regs,stmnt->arg1.imm,stmnt->arg2.reg);
 			break;
 		case LABELL:
 			sprintf(output,"; <label>:%s \n",stmnt->label_name);
@@ -165,3 +172,4 @@ void generate_llvm(stmt *stmnt, FILE *fp){
 	}
     fprintf(fp,"%s",output);
 }
+

@@ -47,6 +47,7 @@
 #define GEP_RCC 31
 #define GEP_RCR 32
 #define GEP_RRR 38
+#define GLOBAL_VAR 39
 
 typedef union {
 	int  imm;
@@ -59,8 +60,8 @@ typedef struct node{
 	param_t arg1;
 	param_t arg2;
 	char *cmp;
-	char *branch[3];
-	char label_name[50];
+	char *branch[5];
+	char label_name[100];
 	struct node *next;
 } stmt;
 
