@@ -262,12 +262,22 @@ void generate_llvm(stmt *stmnt, FILE *fp){
     fprintf(fp,"%s",output);
 }
 
-void register_promotion(stmt stmnt) {
+void register_promotion() {
+current = HEAD;
+char names[200][50];
+int count=0;
 
+while(current != NULL) {
+	if( current->type == ALLOC || current->type == GLOBAL_VAR ) {
+ 		strcpy(names[count++],current->defined_regs);
+	}
+}
+int i;
+for (i=0; i<count; i++){
+	printf("name  %d: %s\n",i,names[i]);
+}
 
-i
-
-
+current=current->next;
 }
 
 void dead_code(stmt stmnt){

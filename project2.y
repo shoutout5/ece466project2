@@ -521,9 +521,10 @@ getelementptr:	REG EQUALS GEP_INBOUNDS INT_TYPE POINTER REG COMMA INT_TYPE NUM
                                   strcpy(type_arr[1], $8); strcpy(type_arr[2], $11);
                                   getelementpointers(GEP_RCC,$1,param1,param2,param3); }
 			| REG EQUALS GEP_INBOUNDS array_type POINTER REG COMMA INT_TYPE NUM COMMA INT_TYPE REG
-								{ /*param_t param1; param_t param2; param_t param3; param3.reg="fixme"; char array_str[50];
-									strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
-									type_arr[0,1,2] = array_str,$8,$11; getelementpointers(GEP_RCR,$1,param1,param2,param3)*/ }
+								{ param_t param1; param_t param2; param_t param3; param3.reg="fixme"; char array_str[50];
+									strcat($4,$5); strcpy(param1.reg,$6); strcpy(param2.reg,$9); 
+				sprintf(array_str,"[%d x %s]%s",$4.size,$4.type,$5);
+									strcpy(type_arr[0],array_str); strcpy(); getelementpointers(GEP_RCR,$1,param1,param2,param3) }
 
 ret_stmt:		RET VOID                    { param_t empty; strcpy(empty.reg,"");
                                             return_stmt("void",empty, RET_REG); }
@@ -612,6 +613,10 @@ int main(int argc, char *argv[]) {
         }
 		yyparse();
 		printf("yyparse done\n");
+	
+//Register promotion
+	register_promotion();
+
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
@@ -624,6 +629,7 @@ int main(int argc, char *argv[]) {
 				current=current->next;
             }
 		fclose(fp);
+		
         }
     }
     return 0;
