@@ -7,7 +7,6 @@
 #include "project2.y.h"
 %}
 
-%option yylineno
 
 %%
 "target datalayout =".*			{ printf("Target datalayout ignored\n"); }
@@ -49,7 +48,7 @@ label						{ printf("LABEL_KEYWORD\n"); return LABEL_KEYWORD; }
 "="							{ printf("EQUALS\n"); return EQUALS; }
 "%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); printf("REG, %s\n", &yytext[1]); return REG; }
 "; <label>:"[a-zA-Z0-9][a-zA-Z_0-9]*	{ strcpy(yylval.reg, yytext); printf("LABEL\n"); return LABEL; }
-"@"[a-zA-Z.][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
+"@"[a-zA-Z.0-9][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); printf("GLOBAL_DEF\n"); return GLOBAL_DEF; }
 "("							{ printf("LPAREN\n"); return LPAREN; }
 ")"							{ printf("RPAREN\n"); return RPAREN; }
 "["							{ printf("LBRACKET\n"); return LBRACKET; }
@@ -69,7 +68,7 @@ x							{ printf("X\n"); return X; }
 "..."						{ printf("ELLIPSIS\n"); return ELLIPSIS; }
 " "							;
 ";".*"\n"						{ strcpy(yylval.reg, yytext); printf("COMMENT\n"); return COMMENT; }
-"\n"						; 
+"\n"							;
 .						 	{printf("UNKNOWN\n"); }
 %%
 
