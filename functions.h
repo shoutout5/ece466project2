@@ -9,7 +9,7 @@ void generate_llvm(stmt *stmnt, FILE *fp);
 int contains(char *string, char *find);
 void register_promotion();
 void ssa_form(stmt *stmnt, char *reg);
-char* isPromtedVar(char *reg);
+char* isPromtedVar(char *reg, int type);
 int isReg(stmt *step, int arg);
 int dead_code();
 

@@ -10,8 +10,11 @@
 
 extern char type_arr[6][100];
 
+char pass[100];
+
 char repNames[200][50];
 char names[200][50];
+int version[200];
 int count=0;
 
 int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
@@ -25,7 +28,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
 		strcpy(data->defined_regs, defined_regs);
 	else
 		strcpy(data->defined_regs,"");
-		
+    
 	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == STR_CONST || type == ALLOC_ARRAY || type == CALL_PRINTF || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == ALLOC_ARRAY || type == CALL_SCANF || type == GLOBAL_CONST || type == RET_NUM)
 		data->arg1.imm=arg1->imm;
 	else
@@ -55,7 +58,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
             }
         }
     }
-
+    
 	data->next=NULL;
 	if (current != NULL)
 		current->next=data;
@@ -279,12 +282,15 @@ void register_promotion() {
 	stmt *cur;
 	char *newName;
 	int i;
-
+    
+	for(i=0;i<200;i++)
+		version[i]=0;
+    
 	stmt *temp;
 	stmt *prev;
-
+    
 	cur = HEAD;
-
+    
 	//scan for vaiable to promote
 	while(cur != NULL) {
 		if( cur->type == ALLOC || cur->type == GLOBAL_VAR ) {
@@ -292,8 +298,8 @@ void register_promotion() {
 		}
 		cur=cur->next;
 	}
-
-
+    
+    
 	// scan for passing var addresses to function call
 	cur = HEAD;
 	while(cur != NULL)
@@ -308,13 +314,13 @@ void register_promotion() {
 		}
 		cur=cur->next;
 	}
-
+    
 	// replace variables with register
 	for(i=0;i<count;i++)
 	{
 		if(!strcmp(names[i],"NOT A VAR"))
 			continue;
-
+        
 		cur = HEAD;
 		prev = NULL;
 		while(cur != NULL)
@@ -325,24 +331,24 @@ void register_promotion() {
 					prev->next = cur->next;
 				else
 					HEAD = cur->next;
-
+                
 				free(cur);
-
-				sprintf(repNames[i], "%%rep__%s", &names[i][1]);	//generate new reg name
+                
+				sprintf(repNames[i], "%%rep_%s", &names[i][1]);	//generate new reg name
 				break;
 			}
 			prev = cur;
 			cur = cur->next;
 		}
 	}
-
+    
 	// replace loads and stores of used variables
 	cur = HEAD;
 	while(cur != NULL)
 	{
 		if(cur->type == LOADD)
 		{
-			newName = isPromtedVar(cur->arg1.reg);
+			newName = isPromtedVar(cur->arg1.reg, LOADD);
 			if(newName != NULL)
 			{
 				strcpy(cur->branch[0],"i32");
@@ -353,7 +359,7 @@ void register_promotion() {
 		}
 		else if(cur->type == STR_REG)
 		{
-			newName = isPromtedVar(cur->defined_regs);
+			newName = isPromtedVar(cur->defined_regs, STR_REG);
 			if(newName != NULL)
 			{
 				char temp[50];
@@ -366,7 +372,7 @@ void register_promotion() {
 		}
 		else if(cur->type == STR_CONST)
 		{
-			newName = isPromtedVar(cur->defined_regs);
+			newName = isPromtedVar(cur->defined_regs, STR_CONST);
 			if(newName != NULL)
 			{
 				strcpy(cur->defined_regs, newName);
@@ -379,14 +385,18 @@ void register_promotion() {
 	}
 }
 
-char* isPromtedVar(char *reg)
+char* isPromtedVar(char *reg, int type)
 {
 	int i;
 	for(i=0;i<count;i++)
 	{
 		if(!strcmp(reg, names[i]))
 		{
-			return repNames[i];
+			if(type != LOADD)
+				version[i]++;
+            
+			sprintf(pass, "%s_%d", repNames[i], version[i]);
+			return pass;
 		}
 	}
 	return NULL;
@@ -398,7 +408,7 @@ int contains(char *string, char *find)
 	int i;
 	if(!strcmp(find,"NOT A VAR"))
 		return 0;
-		
+    
 	for(i=0;i<=(strlen(string)-strlen(find));i++)
 	{
 		if(!strncmp(find,&string[i],strlen(find)))
@@ -413,130 +423,130 @@ int contains(char *string, char *find)
 }
 
 int dead_code(){
-stmt *curr=HEAD;
-stmt *step=HEAD;
-stmt *prev=NULL;
-char returnSSA[50];
-int used=0;
-//iterate until we reach the end of the linked list
-while(curr != NULL) {	
-	
-	if( curr->defined_regs != NULL && strcmp(curr->defined_regs,"") ) {//as long as defined_regs is readable
-		//printf("found type %d \n",curr->type);
-		if(curr->type == GLOBAL_CONST || curr->type == FUNC_DEC || curr->type == CALL_PRINTF || curr->type == CALL_SCANF){  //if the type isn't part of the DC elimination,
-			prev=curr;						//skip it
-			curr=curr->next;
-			continue;	
-
-		} else {
-			printf("defd found: %s\n",curr->defined_regs);
-			step=curr;
-			//run through the file from the current point and see if there are any uses of defined_regs
-			while(step != NULL){
-				//printf("type: %d\n",step->type);
-				//if the type is not something we care about, move to the next item
-				if (step->type == GLOBAL_CONST || step->type == FUNC_DEC || step->type == LABELL || step->type == LABEL ) { 
-					step=step->next;
-					continue;
-				}
-	
-				//since the type is now something we care about we make sure that the value in arg1 is a register
-				if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
-					//now that we're sure it's a register check to see if it is used
-					if (!strcmp(step->arg1.reg,curr->defined_regs) && strcmp(step->arg1.reg,"") && strcmp(step->arg1.reg,"\n")) {
-						printf("use found1: '%s'\n",step->arg1.reg);
-						used++;
-					}
-				}
-				//since the type is now something we care about we make sure that the value in arg2 is a register
-				if (step->type != SUB_CC || step->type != SUB_RC || step->type != ADD_CC || step->type != ADD_RC || step->type != CMP_CC || step->type != CMP_RC || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != CALL_PRINTF || step->type != GEP_RC || step->type != GEP_RCC ) {
-					//now that we're sure it's a register check to see if it is used
-					if (!strcmp(step->arg2.reg,curr->defined_regs) && strcmp(step->arg2.reg,"") && strcmp(step->arg2.reg,"\n")) {
-						printf("use found2: %s\n",step->arg2.reg);
-						used++;
-					}
-				}
-				if (step->type == CALL_PRINTF || step->type == CALL_SCANF){
-					int i=0;
-					int j;
-					char *begin, *end;
-					char regIn[50];	
-					char printscan[20][50];
-					char printscan1[20][50];
-					char temp[50];
-					begin = step->label_name;
-					char * val1, val2;
-					char original[100]; 
-					strcpy(original, step->label_name);	
-				//	printf("or: %s\n",original);
-					val1 = strtok(original, " ,");
-				//	printf("or: %s\n",original);
-					while(val1 != NULL) {
-						strcpy(printscan[i], val1);
-				//		printf("%s\n",printscan[i]);
-						i++;
-						val1 = strtok(NULL, " ,");
-					}
-				for(j=1;j<=i;j=j+2){
-						sprintf(temp,"%s",printscan[j]);
-						//printf("tmp: %s\n",temp);
-						if(!strcmp(temp,curr->defined_regs)){
-							printf("found %s\n",temp);	
-							used++;	
-						}
-					}
-	
-				}
-				//if the register is used break out of the while loop
-				if (used > 0){
-					break;
-				}
-				else { //otherwise continue searching
-					step=step->next;
-				}
-			}
-		//we're now done checking for this register
-		} 
-//		printf("used: %d\n",used);	
-		//now we see if it is ever used
-		if(used == 0) {
-	
-//			printf("none used for '%s'",curr->defined_regs); 
-			strcpy(returnSSA,curr->defined_regs);		
-			//if never used delete the node in the linked list
-			if(curr->next != NULL && curr != HEAD) { //check to see if we are at the end or beginning of list	
-				prev->next=curr->next;
-				free(curr);
-				curr=prev->next;
-			} else if(curr == HEAD) {
-				HEAD=curr->next;
-				prev=NULL;
-				free(curr);
-			}	
-			else { //if we are at the end of the list
-				prev->next=NULL;
-				free(curr);
-				curr=prev->next;
-			}
-			break;
-
-		} else { //if the register is used move on
-			prev=curr;	
-			curr=curr->next;
-			used=0;
-		}
-	} else {
-		 prev=curr;                                              //skip it
-                 curr=curr->next;
-                 continue;
-	}	
-}
-ssa_form(curr,returnSSA);
-//if we quit because we found a match tell the user to run again
-if(used==0)
-	return MORE_TO_DO;
-else //otherwise tell the user we're done with analysis.
-	return DONE;
+    stmt *curr=HEAD;
+    stmt *step=HEAD;
+    stmt *prev=NULL;
+    char returnSSA[50];
+    int used=0;
+    //iterate until we reach the end of the linked list
+    while(curr != NULL) {	
+        
+        if( curr->defined_regs != NULL && strcmp(curr->defined_regs,"") ) {//as long as defined_regs is readable
+            //printf("found type %d \n",curr->type);
+            if(curr->type == GLOBAL_CONST || curr->type == FUNC_DEC || curr->type == CALL_PRINTF || curr->type == CALL_SCANF){  //if the type isn't part of the DC elimination,
+                prev=curr;						//skip it
+                curr=curr->next;
+                continue;	
+                
+            } else {
+                printf("defd found: %s\n",curr->defined_regs);
+                step=curr;
+                //run through the file from the current point and see if there are any uses of defined_regs
+                while(step != NULL){
+                    //printf("type: %d\n",step->type);
+                    //if the type is not something we care about, move to the next item
+                    if (step->type == GLOBAL_CONST || step->type == FUNC_DEC || step->type == LABELL || step->type == LABEL ) { 
+                        step=step->next;
+                        continue;
+                    }
+                    
+                    //since the type is now something we care about we make sure that the value in arg1 is a register
+                    if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
+                        //now that we're sure it's a register check to see if it is used
+                        if (!strcmp(step->arg1.reg,curr->defined_regs) && strcmp(step->arg1.reg,"") && strcmp(step->arg1.reg,"\n")) {
+                            printf("use found1: '%s'\n",step->arg1.reg);
+                            used++;
+                        }
+                    }
+                    //since the type is now something we care about we make sure that the value in arg2 is a register
+                    if (step->type != SUB_CC || step->type != SUB_RC || step->type != ADD_CC || step->type != ADD_RC || step->type != CMP_CC || step->type != CMP_RC || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != CALL_PRINTF || step->type != GEP_RC || step->type != GEP_RCC ) {
+                        //now that we're sure it's a register check to see if it is used
+                        if (!strcmp(step->arg2.reg,curr->defined_regs) && strcmp(step->arg2.reg,"") && strcmp(step->arg2.reg,"\n")) {
+                            printf("use found2: %s\n",step->arg2.reg);
+                            used++;
+                        }
+                    }
+                    if (step->type == CALL_PRINTF || step->type == CALL_SCANF){
+                        int i=0;
+                        int j;
+                        char *begin, *end;
+                        char regIn[50];	
+                        char printscan[20][50];
+                        char printscan1[20][50];
+                        char temp[50];
+                        begin = step->label_name;
+                        char * val1, val2;
+                        char original[100]; 
+                        strcpy(original, step->label_name);	
+                        //	printf("or: %s\n",original);
+                        val1 = strtok(original, " ,");
+                        //	printf("or: %s\n",original);
+                        while(val1 != NULL) {
+                            strcpy(printscan[i], val1);
+                            //		printf("%s\n",printscan[i]);
+                            i++;
+                            val1 = strtok(NULL, " ,");
+                        }
+                        for(j=1;j<=i;j=j+2){
+                            sprintf(temp,"%s",printscan[j]);
+                            //printf("tmp: %s\n",temp);
+                            if(!strcmp(temp,curr->defined_regs)){
+                                printf("found %s\n",temp);	
+                                used++;	
+                            }
+                        }
+                        
+                    }
+                    //if the register is used break out of the while loop
+                    if (used > 0){
+                        break;
+                    }
+                    else { //otherwise continue searching
+                        step=step->next;
+                    }
+                }
+                //we're now done checking for this register
+            } 
+            //		printf("used: %d\n",used);	
+            //now we see if it is ever used
+            if(used == 0) {
+                
+                //			printf("none used for '%s'",curr->defined_regs); 
+                strcpy(returnSSA,curr->defined_regs);		
+                //if never used delete the node in the linked list
+                if(curr->next != NULL && curr != HEAD) { //check to see if we are at the end or beginning of list	
+                    prev->next=curr->next;
+                    free(curr);
+                    curr=prev->next;
+                } else if(curr == HEAD) {
+                    HEAD=curr->next;
+                    prev=NULL;
+                    free(curr);
+                }	
+                else { //if we are at the end of the list
+                    prev->next=NULL;
+                    free(curr);
+                    curr=prev->next;
+                }
+                break;
+                
+            } else { //if the register is used move on
+                prev=curr;	
+                curr=curr->next;
+                used=0;
+            }
+        } else {
+            prev=curr;                                              //skip it
+            curr=curr->next;
+            continue;
+        }	
+    }
+    ssa_form(curr,returnSSA);
+    //if we quit because we found a match tell the user to run again
+    if(used==0)
+        return MORE_TO_DO;
+    else //otherwise tell the user we're done with analysis.
+        return DONE;
 }
 
 
@@ -561,14 +571,14 @@ void ssa_form(stmt *stmnt, char *reg)
 		//printf("NULL REturn\n");
 		return;
 	}
-
+    
 	ref = atoi(&reg[1]);
 	if(ref == 0)		//removed a variable or something not a register
 	{
 		//printf("No NUm Return\n");
 		return;
 	}
-
+    
 	while(curr != NULL)
 	{
 		if(isReg(curr, 1))
@@ -589,14 +599,14 @@ void ssa_form(stmt *stmnt, char *reg)
 				//printf("Reg Deced %d\n", (currentReg-1));
 			}
 		}
-
+        
 		currentReg = atoi(&curr->defined_regs[1]);
 		if((currentReg != 0) && (currentReg > ref))
 		{
 			sprintf(curr->defined_regs, "%%%d", (currentReg-1));
 			//printf("Reg Deced %d\n", (currentReg-1));
 		}
-
+        
 		if((curr->type == CALL_SCANF) || (curr->type == CALL_PRINTF))
 		{			
 			begin = curr->label_name;
@@ -604,19 +614,22 @@ void ssa_form(stmt *stmnt, char *reg)
 			{
 				end = strchr(begin, '%');
 				if(end == NULL) break;
-
+                
 				strncat(argsOut, begin, (end-begin-1));
-
+                
 				begin = end+1;
 				end = strchr(begin, ' ');
 				if(end == NULL)
 					end = begin + strlen(begin);
-
+                
 				strncpy(regIn, begin, (end-begin));
-
+                
 				currentReg = atoi(regIn);
-				sprintf(argsOut, "%s %%%d", argsOut, (currentReg-1));
-
+				if(currentReg > ref)
+					sprintf(argsOut, "%s %%%d", argsOut, (currentReg-1));
+				else
+					sprintf(argsOut, "%s %%%d", argsOut, currentReg);
+                
 				begin = strchr(begin, ',');
 				if(begin == NULL)
 					break;
@@ -626,13 +639,12 @@ void ssa_form(stmt *stmnt, char *reg)
 					strcat(argsOut, ", ");
 				}
 			}
-
+            
 			sprintf(curr->label_name, "%s", argsOut);
 		}
-			
+        
 		curr = curr->next;
 	}
-	current=current->next;
 }
 
 int isReg(stmt *step, int arg)
@@ -640,7 +652,7 @@ int isReg(stmt *step, int arg)
 	if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
 		//now that we're sure it's a register check to see if it is used
 		if (strcmp(step->arg1.reg,"") && strcmp(step->arg1.reg,"\n")) {
-
+            
 			if(arg==1)
 				return 1;
 		}
@@ -649,7 +661,7 @@ int isReg(stmt *step, int arg)
 	if (step->type != SUB_CC || step->type != SUB_RC || step->type != ADD_CC || step->type != ADD_RC || step->type != CMP_CC || step->type != CMP_RC || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != CALL_PRINTF || step->type != GEP_RC || step->type != GEP_RCC ) {
 		//now that we're sure it's a register check to see if it is used
 		if (strcmp(step->arg2.reg,"") && strcmp(step->arg1.reg,"\n")) {
-
+            
 			if(arg==2)
 				return 1;
 		}
@@ -666,7 +678,7 @@ block *generate_cfg()
     stmt *line = HEAD;
     block *label_list[20];
     block *present;
-        
+    
     while (line->type != FUNC_DEC)
         line=line->next;
     
@@ -699,12 +711,12 @@ block *generate_cfg()
             }
         }
     }
-        
+    
     while (k < i) 
     {
         present = label_list[++k];
         j = 0;
-                        
+        
         while (present->instruction->type != BR_COND && present->instruction->type != BR_UNCOND)
         {
             present=present->left;
@@ -739,7 +751,7 @@ block *generate_cfg()
             {
                 j++;
             }
-                   
+            
             present->left = label_list[j];
             
             if (strcmp(present->left->preds, "; preds =") != 0)
@@ -777,10 +789,9 @@ block *generate_cfg()
     sprintf(label_list[0]->preds,"%s","");
     
     /*for (i = 0; i<= 11; i++)
-    {
-        printf("%d, %s\n", label_list[i]->instruction->type, label_list[i]->preds);
-    }*/
+     {
+     printf("%d, %s\n", label_list[i]->instruction->type, label_list[i]->preds);
+     }*/
     
     return present;
 }
-
