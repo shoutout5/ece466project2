@@ -94,6 +94,13 @@ typedef struct {
     char type[50];
 } array_def;
 
+typedef struct nodeptr {
+    stmt *instruction;
+    struct nodeptr *left;
+    struct nodeptr *right;
+    char preds[100];
+} block;
+
 extern stmt *current;
 extern stmt *HEAD;
 
