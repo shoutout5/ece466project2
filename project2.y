@@ -609,30 +609,31 @@ int main(int argc, char *argv[]) {
 	HEAD=NULL;
 	current=NULL;
 	if (argc<3) {
-        printf("Incorrect parameters.\n");
-        printf("project2 [outputfile] [inputfile]\n");
-    }
+   	     printf("Incorrect parameters.\n");
+   	     printf("project2 [outputfile] [inputfile]\n");
+   	 }
 	else {
 		yyin = fopen(argv[2], "r"); 
-        if(yyin == NULL) {
+        	if(yyin == NULL) {
 			printf("Error! Could not open input file for reading.\nPlease check your spelling and try again.\n");
-        }
+       		}
 		yyparse();
 		printf("yyparse done\n");
 	
 	//test output
-current=HEAD;
-		FILE *fp = fopen(out-unchanged.ll, "w");
-		if(fp == NULL) {
+		current=HEAD;
+		FILE *fp1 = fopen("out-unchanged.ll", "w");
+		if(fp1 == NULL) {
 			printf("Error! Could not open output file for writing.\nPlease check your spelling and try again.\n");
-        }
+       		}
 		else  {
 			printf("in else\n");
 			while (current != NULL){
-				generate_llvm(current,fp);
+				generate_llvm(current,fp1);
 				current=current->next;
-            }
-		fclose(fp);
+            		}
+		fclose(fp1);
+		}
 
 //Register promotion
 	//register_promotion();
@@ -641,17 +642,17 @@ current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
 			printf("Error! Could not open output file for writing.\nPlease check your spelling and try again.\n");
-        }
+        	}
 		else  {
 			printf("in else\n");
 			while (current != NULL){
 				generate_llvm(current,fp);
 				current=current->next;
-            }
+            		}
 		fclose(fp);
+		}
 		
-        }
-    }
+	}
     return 0;
 }
 
