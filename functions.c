@@ -4,6 +4,9 @@
 #include "defines.h"
 #include "project2.y.h"
 
+#define MORE_TO_DO 0
+#define DONE 1
+
 extern char type_arr[6][100];
 
 int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
@@ -278,34 +281,100 @@ for (i=0; i<count; i++){
 
 }
 
-void dead_code(){
-/*
-current=HEAD;
-//stmnt *step=HEAD;
+int dead_code(){
+int used=1;
+stmt *curr=HEAD;
+stmt *step=HEAD;
 char dead[100][50]; 
+stmt *prev=NULL;
 
-while(current != NULL) {
-	if( current->defined_regs != NULL && strcmp(current->defined_regs,"") ) {
- 		printf("defd found: %s\n",current->defined_regs);
-	
-		while(step=>next != NULL){
-			if (type != SUB_CC || type != SUB_CR || type != ADD_CC || type != ADD_CR || type != CMP_CC || type != CMP_CR || type != ALLOC_ARRAY || type != CALL_PRINTF || type != ADD_CR || type != CMP_CC || type != CMP_CR || type != STR_CONST || type != ALLOC_ARRAY || type != CALL_SCANF || type != GLOBAL_CONST || type != RET_NUM){
-								
+//iterate until an element that can be deleted is found or we reach the end of the linked list
+while(curr != NULL && used > 0) {	
+	used=0;
+
+	if( curr->defined_regs != NULL && !strcmp(curr->defined_regs,"") ) { //as long as defined_regs is readable
+		if(curr->type == GLOBAL_CONST){ 				  //if the type isn't part of the DC elimination,
+			prev=curr;						//skip it
+			curr=curr->next;
+			continue;
+		}	
+
+	} else {
+		printf("defd found: %s\n",curr->defined_regs);
+		step=curr;
+		//run through the file from the current point and see if there are any uses of defined_regs
+		while(step != NULL){
+
+			//if the type is not something we care about, move to the next item
+			if (step->type == GLOBAL_CONST || step->type == FUNC_DEC || step->type == LABELL || step->type == LABEL ) { 
+				step=step->next;
+				continue;
 			}
 
-			if (type != SUB_CC || type != SUB_RC || type != ADD_CC || type != ADD_RC || type != CMP_CC || type != CMP_RC || type != ALLOC_ARRAY || type != CALL_SCANF || type != CALL_PRINTF || type != GEP_RC || type != GEP_RCC) {
-
+			//since the type is now something we care about we make sure that the value in arg1 is a register
+			if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
+				//now that we're sure it's a register check to see if it is used
+				if (strcmp(step->arg1.reg,curr->defined_regs) && strcmp(step->arg1.reg,"") && strcmp(step->arg1.reg,"\n")) {
+					used++;
+					printf("use found1: '%s'\n",step->arg1.reg);
+				}
 			}
-			
+			//since the type is now something we care about we make sure that the value in arg2 is a register
+			if (step->type != SUB_CC || step->type != SUB_RC || step->type != ADD_CC || step->type != ADD_RC || step->type != CMP_CC || step->type != CMP_RC || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != CALL_PRINTF || step->type != GEP_RC || step->type != GEP_RCC ) {
+				//now that we're sure it's a register check to see if it is used
+				if (strcmp(step->arg2.reg,curr->defined_regs) && strcmp(step->arg2.reg,"")) {
+					used++;
+					printf("use found2: %s\n",step->arg2.reg);
+				}
+			}
+
+			//if the register is used break out of the while loop
+			if (used > 0)
+				break;
+			else { //otherwise continue searching
+				step=step->next;
+			}
 		}
-		
-		
+	//we're now done checking for this register
+	} 
 
+	//now we see if it is ever used
+	if(used == 0) {
+
+		printf("none used for %s of type",curr->defined_regs); 
+		
+		//if never used delete the node in the linked list
+		if(curr->next != NULL && curr != HEAD) { //check to see if we are at the end or beginning of list	
+			printf("Deleting use");			
+			prev->next=curr->next;
+			free(curr);
+			curr=prev->next;
+		} else if(curr == HEAD) {
+			printf("Deleting use");
+			HEAD=curr->next;
+			prev=NULL;
+			free(curr);
+		}	
+		else { //if we are at the end of the list
+			printf("Deleting use");
+			prev->next=NULL;
+			free(curr);
+			curr=prev->next;
+		}
+		break;
+
+	} else { //if the register is used move on
+		prev=curr;	
+		curr=curr->next;
 	}
-	current=current->next;
+	
 }
 
-*/
+//if we quit because we found a match tell the user to run again
+if(used==0)
+	return MORE_TO_DO;
+else //otherwise tell the user we're done with analysis.
+	return DONE;
 }
 
 void ssa_form(stmt stmnt){

@@ -620,9 +620,23 @@ int main(int argc, char *argv[]) {
 		yyparse();
 		printf("yyparse done\n");
 	
+	//test output
+current=HEAD;
+		FILE *fp = fopen(out-unchanged.ll, "w");
+		if(fp == NULL) {
+			printf("Error! Could not open output file for writing.\nPlease check your spelling and try again.\n");
+        }
+		else  {
+			printf("in else\n");
+			while (current != NULL){
+				generate_llvm(current,fp);
+				current=current->next;
+            }
+		fclose(fp);
+
 //Register promotion
 	//register_promotion();
-	//dead_code();
+	dead_code();
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
