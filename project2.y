@@ -622,7 +622,7 @@ int main(int argc, char *argv[]) {
 	
 //Register promotion
 	register_promotion();
-	while (dead_code() != 0);
+	//while (dead_code() != 0);
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
@@ -799,7 +799,7 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2, 
 void global_constant(char *name, int size, char *strVal)
 {
 	param_t value, sizeParam;
-	printf("____GBL_CONST");
+	//printf("____GBL_CONST");
 	strcpy(value.reg, strVal);
 	sizeParam.imm = size;
 	process_instruction(GLOBAL_CONST,name,&sizeParam,&value,"",NULL,"");

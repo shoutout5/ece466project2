@@ -49,7 +49,7 @@ label						{ return LABEL_KEYWORD; }
 "="							{ return EQUALS; }
 "%"[a-zA-Z0-9][a-zA-Z_0-9]*		{ strcpy(yylval.reg, yytext); return REG; }
 "; <label>:"[a-zA-Z0-9][a-zA-Z_0-9]*	{ strcpy(yylval.reg, yytext); return LABEL; }
-"@"[a-zA-Z.][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); return GLOBAL_DEF; }
+"@"[a-zA-Z.0-9][a-zA-Z0-9]*			{ strcpy(yylval.reg, yytext); return GLOBAL_DEF; }
 "("							{ return LPAREN; }
 ")"							{ return RPAREN; }
 "["							{ return LBRACKET; }
