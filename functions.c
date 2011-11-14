@@ -45,12 +45,12 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
     
     for(i=0; i<=5; i++)
     {
-		if (type == BR_COND) {
-            strcpy(data->branch[i],branch[i]);
-            if (i == 3)
-                break;
-        }
-        else {
+	if (type == BR_COND) {
+		if(branch[i] != NULL)
+	            strcpy(data->branch[i],branch[i]);
+         	if (i == 3)
+               		break;
+        } else {
             if(type_arr[i] != NULL)
             {
                 //printf("%d %s\n", i, type_arr[i]);
@@ -440,7 +440,7 @@ int dead_code(){
                 
             } else {
                 printf("defd found: %s\n",curr->defined_regs);
-                step=curr;
+                step=HEAD;
                 //run through the file from the current point and see if there are any uses of defined_regs
                 while(step != NULL){
                     //printf("type: %d\n",step->type);
@@ -454,7 +454,7 @@ int dead_code(){
                     if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
                         //now that we're sure it's a register check to see if it is used
                         if (!strcmp(step->arg1.reg,curr->defined_regs) && strcmp(step->arg1.reg,"") && strcmp(step->arg1.reg,"\n")) {
-                            printf("use found1: '%s'\n",step->arg1.reg);
+                            //printf("use found1: '%s'\n",step->arg1.reg);
                             used++;
                         }
                     }
@@ -462,7 +462,7 @@ int dead_code(){
                     if (step->type != SUB_CC || step->type != SUB_RC || step->type != ADD_CC || step->type != ADD_RC || step->type != CMP_CC || step->type != CMP_RC || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != CALL_PRINTF || step->type != GEP_RC || step->type != GEP_RCC ) {
                         //now that we're sure it's a register check to see if it is used
                         if (!strcmp(step->arg2.reg,curr->defined_regs) && strcmp(step->arg2.reg,"") && strcmp(step->arg2.reg,"\n")) {
-                            printf("use found2: %s\n",step->arg2.reg);
+                            //printf("use found2: %s\n",step->arg2.reg);
                             used++;
                         }
                     }
@@ -475,7 +475,7 @@ int dead_code(){
                         char printscan1[20][50];
                         char temp[50];
                         begin = step->label_name;
-                        char * val1, val2;
+                        char * val1;
                         char original[100]; 
                         strcpy(original, step->label_name);	
                         //	printf("or: %s\n",original);
@@ -507,11 +507,11 @@ int dead_code(){
                 }
                 //we're now done checking for this register
             } 
-            //		printf("used: %d\n",used);	
+            		printf("used: %d\n",used);	
             //now we see if it is ever used
             if(used == 0) {
                 
-                //			printf("none used for '%s'",curr->defined_regs); 
+                	//printf("none used for '%s'",curr->defined_regs); 
                 strcpy(returnSSA,curr->defined_regs);		
                 //if never used delete the node in the linked list
                 if(curr->next != NULL && curr != HEAD) { //check to see if we are at the end or beginning of list	
@@ -541,9 +541,9 @@ int dead_code(){
             continue;
         }	
     }
-    ssa_form(curr,returnSSA);
+    //ssa_form(curr,returnSSA);
     //if we quit because we found a match tell the user to run again
-    if(used==0)
+    if(used==0 && curr != NULL)
         return MORE_TO_DO;
     else //otherwise tell the user we're done with analysis.
         return DONE;

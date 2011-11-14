@@ -63,44 +63,44 @@ func_list: 	func_call
 | func_list func_call 
 
 func_call:	func_start LBRACE stmt_list RBRACE
-{ //printf("__function definition\n"); 
+{ printf("__function definition\n"); 
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0;
     process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
 | func_start NOUNWIND LBRACE stmt_list RBRACE
-{ //printf("__function definition\n"); 
+{ printf("__function definition\n"); 
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0;
     process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
 | func_start NOUNWIND_SSP LBRACE stmt_list RBRACE
-{ //printf("__function definition\n"); 
+{ printf("__function definition\n"); 
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0;
     process_instruction(FUNC_END, "", &arg1, &arg2, "", NULL, ""); }
 
 func_start:	DEFINE INT_TYPE GLOBAL_DEF LPAREN param_list	RPAREN	
-{ //printf("Function Header: %s\n", $1);
+{ printf("Function Header: %s\n", $1);
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0; 
     process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
 | DEFINE INT_TYPE GLOBAL_DEF LPAREN RPAREN	
-{ //printf("Function Header: %s\n", $1);
+{ printf("Function Header: %s\n", $1);
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0; 
     process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
 | DEFINE VOID GLOBAL_DEF LPAREN param_list RPAREN
-{ //printf("Function Header: %s\n", $1);
+{ printf("Function Header: %s\n", $1);
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0; 
     process_instruction(FUNC_DEC, "", &arg1, &arg2, "", NULL, $1); }
 | DEFINE VOID GLOBAL_DEF LPAREN RPAREN
-{ //printf("Function Header: %s\n", $1);
+{ printf("Function Header: %s\n", $1);
     param_t arg1, arg2;
     arg1.imm = 0;
     arg2.imm = 0; 
@@ -601,13 +601,13 @@ global_list:	global_stmt				{  }
 | global_list global_stmt	{  }
 
 global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITERAL
-{ //printf("__global stmt\n");  
+{ printf("__global stmt\n");  
     global_constant($1, $6.size, $7); }
 | GLOBAL_DEF EQUALS COMMON GLOBAL INT_TYPE NUM COMMA ALIGN NUM
 { char data[50];
     strcpy(data, "common global ");
     strcat(data, $5);
-    //printf("____________________here: %s\n", data);
+    printf("____________________here: %s\n", data);
     globalVar($1, data, $6); }
 /*| GLOBAL_DEF EQUALS GLOBAL INT_TYPE POINTER GLOBAL_DEF COMMA ALIGN NUM
  {  }
@@ -625,7 +625,7 @@ global_stmt:	GLOBAL_DEF EQUALS PRIVATE UNNAMED_ADDR CONSTANT array_type STR_LITE
 
 // portions of complex statments
 array_type:	LBRACKET NUM X INT_TYPE RBRACKET
-{ //printf("___Array Type: %d x %s\n\n", $2, $4);  
+{ printf("___Array Type: %d x %s\n\n", $2, $4);  
     array_def contents; contents.size = $2; strcpy(contents.type,$4);
     $$ = contents; /*printf("test\n");*/}
 
@@ -659,8 +659,8 @@ int main(int argc, char *argv[]) {
 		//printf("yyparse done\n");
         
         //Register promotion
+        while (dead_code() != 0);
         register_promotion();
-        //while (dead_code() != 0);
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
@@ -685,7 +685,7 @@ int main(int argc, char *argv[]) {
 void allocaStmt(char *reg, int size, array_def *contents)
 {
 	param_t tmp, array_size;
-    //printf("___Found Alloca Statment, Reg: %s\n\n", reg);	
+    printf("___Found Alloca Statment, Reg: %s\n\n", reg);	
 	tmp.imm = size;
     
     if (contents == NULL)
@@ -698,71 +698,71 @@ void allocaStmt(char *reg, int size, array_def *contents)
 
 void labelStmt(char *name)
 {
-	//printf("__Label %s\n", name);
+	printf("__Label %s\n", name);
  	process_instruction(LABELL, NULL, &empty, &empty, NULL, NULL, name);
 }
 
 void add(char *reg, param_t p1, param_t p2, int type)
 {
-	/*if(type == ADD_CC || type == ADD_CC_NSW)
+	if(type == ADD_CC || type == ADD_CC_NSW)
      {
-     //printf("__Add: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
+     printf("__Add: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
      }
      else if(type == ADD_RR || type == ADD_RR_NSW)
      {
-     //printf("__Add: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
+     printf("__Add: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
      }
      else if(type == ADD_RR || type == ADD_RR_NSW)
      {
-     //printf("__Add: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
+     printf("__Add: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
      }
      else if(type == ADD_CR || type == ADD_CR_NSW)
      {
-     //printf("__Add: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
-     }*/
+     printf("__Add: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+     }
     
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
 void sub(char *reg, param_t p1, param_t p2, int type)
 {
-	/*if(type == SUB_CC || type == SUB_CC_NSW)
+	if(type == SUB_CC || type == SUB_CC_NSW)
      {
-     //printf("__Sub: %s <- %d - %d\n\n", reg, p1.imm, p2.imm);
+     printf("__Sub: %s <- %d - %d\n\n", reg, p1.imm, p2.imm);
      }
      else if(type == SUB_RR || type == SUB_RR_NSW)
      {
-     //printf("__Sub: %s <- %s - %s\n\n", reg, p1.reg, p2.reg);
+     printf("__Sub: %s <- %s - %s\n\n", reg, p1.reg, p2.reg);
      }
      else if(type == SUB_RR || type == SUB_RR_NSW)
      {
-     //printf("__Sub: %s <- %s - %d\n\n", reg, p1.reg, p2.imm);
+     printf("__Sub: %s <- %s - %d\n\n", reg, p1.reg, p2.imm);
      }
      else if(type == SUB_CR || type == SUB_CR_NSW)
      {
-     //printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
-     }*/
+     printf("__Sub: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+     }
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
 void mul(char *reg, param_t p1, param_t p2, int type)
 {
-	/*if(type == MUL_CC || type == MUL_CC_NSW)
+	if(type == MUL_CC || type == MUL_CC_NSW)
      {
-     //printf("__Mul: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
+     printf("__Mul: %s <- %d + %d\n\n", reg, p1.imm, p2.imm);
      }
      else if(type == MUL_RR || type == MUL_RR_NSW)
      {
-     //printf("__Mul: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
+     printf("__Mul: %s <- %s + %s\n\n", reg, p1.reg, p2.reg);
      }
      else if(type == MUL_RR || type == MUL_RR_NSW)
      {
-     //printf("__Mul: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
+     printf("__Mul: %s <- %s + %d\n\n", reg, p1.reg, p2.imm);
      }
      else if(type == MUL_CR || type == MUL_CR_NSW)
      {
-     //printf("__Mul: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
-     }*/
+     printf("__Mul: %s <- %d - %s\n\n", reg, p1.imm, p2.reg);
+     }
     
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
@@ -791,21 +791,21 @@ void sdiv(char *reg, param_t p1, param_t p2, int type)
 
 void brUncond(char *label)
 {
-	//printf("__Branch: %s", &label[1]);
+	printf("__Branch: %s", &label[1]);
 	process_instruction(BR_UNCOND, NULL, &empty, &empty, NULL, NULL, label);
 }
 
 
 void brCond(char *cond, char *trueLabel, char *falseLabel)
 {
-	//printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
+	printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
 	char *arr[3] = {cond, trueLabel, falseLabel};
 	process_instruction(BR_COND, NULL, &empty, &empty, NULL, arr, empty.reg);
 }
 
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
 {
-	/*if(type == CMP_CC)
+	if(type == CMP_CC)
      {
      printf("__CMP: %s <- %d %s %d\n\n", assignReg, p1.imm, comp, p2.imm);
      }
@@ -820,14 +820,14 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
      else if(type == CMP_CR)
      {
      printf("__CMP: %s <- %d %s %s\n\n", assignReg, p1.imm, comp, p2.reg);
-     }*/
+     }
     
     process_instruction(type, assignReg, &p1, &p2, comp, NULL, empty.reg);
 }
 
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3)
 {
-	//printf("___GEP ");
+	printf("___GEP ");
 	if(type == GEP_RCR)
 		process_instruction(type, defined,&param1,&param3,param2.reg,NULL,"");
 	else
@@ -837,7 +837,7 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2, 
 void global_constant(char *name, int size, char *strVal)
 {
 	param_t value, sizeParam;
-	//printf("____GBL_CONST");
+	printf("____GBL_CONST");
 	strcpy(value.reg, strVal);
 	sizeParam.imm = size;
 	process_instruction(GLOBAL_CONST,name,&sizeParam,&value,"",NULL,"");
@@ -845,7 +845,7 @@ void global_constant(char *name, int size, char *strVal)
 
 void loadStmt(char *destReg, char *pointer)
 {
-	//printf("__load: %s <- %s\n\n", destReg, pointer);
+	printf("__load: %s <- %s\n\n", destReg, pointer);
 	param_t tmp;
 	strcpy(tmp.reg,pointer);
     
@@ -869,7 +869,7 @@ void storeStmt(char *dest, param_t param, int type)
 
 void return_stmt(char *return_type, param_t param, int type)
 {
-	//printf("__return statement: %s ",return_type);
+	printf("__return statement: %s ",return_type);
 	process_instruction(type,empty.reg,&param,&empty,NULL, NULL, return_type);
 }
 

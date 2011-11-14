@@ -1,1 +1,3 @@
-This is the project folder for ECE 466.
+This project was attempted by Scott Gaffer, Christopher Jedd and Andrew Southard.
+
+To compile this code, unzip the file into the Testing directory, change to the source direcoty and run make. Then move back to the Testing directory and run make myown-test.
