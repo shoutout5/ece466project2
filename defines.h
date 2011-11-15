@@ -72,6 +72,7 @@
 #define SDIV_RC_NSW 59
 #define SDIV_CR  60
 #define SDIV_CR_NSW 61
+#define PHI_NODE 62
 
 typedef union {
 	int  imm;
@@ -100,11 +101,6 @@ typedef struct nodeptr {
     struct nodeptr *right;
     char preds[100];
 } block;
-
-typedef struct {
-    block **label_list;
-    int num_of_labels;
-} block_array;
 
 extern stmt *current;
 extern stmt *HEAD;

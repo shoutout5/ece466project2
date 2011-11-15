@@ -45,11 +45,11 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
     
     for(i=0; i<=5; i++)
     {
-        if (type == BR_COND) {
-            if(branch[i] != NULL)
+	if (type == BR_COND) {
+		if(branch[i] != NULL)
 	            strcpy(data->branch[i],branch[i]);
          	if (i == 3)
-                break;
+               		break;
         } else {
             if(type_arr[i] != NULL)
             {
@@ -354,18 +354,18 @@ void register_promotion() {
 			{
 				//if(strchr(cur->branch[0],'*') == NULL)
 				//{
-                strcpy(cur->branch[0],"i32");
-                strcpy(cur->arg1.reg, newName);
-                cur->arg2.imm = 0;
-                cur->type = ADD_RC;
+					strcpy(cur->branch[0],"i32");
+					strcpy(cur->arg1.reg, newName);
+					cur->arg2.imm = 0;
+					cur->type = ADD_RC;
 				//}
 				/*else
-                 {
-                 strcpy(cur->arg1.reg, newName);
-                 strcpy(cur->branch[1], "i32");
-                 cur->arg2.imm = 0;
-                 cur->type = GEP_RC;
-                 }*/
+				{
+					strcpy(cur->arg1.reg, newName);
+					strcpy(cur->branch[1], "i32");
+					cur->arg2.imm = 0;
+					cur->type = GEP_RC;
+				}*/
 			}			
 		}
 		else if(cur->type == STR_REG)
@@ -540,11 +540,11 @@ int dead_code(){
                 }
                 //we're now done checking for this register
             } 
-            printf("used: %d\n",used);	
+            		printf("used: %d\n",used);	
             //now we see if it is ever used
             if(used == 0) {
                 
-                //printf("none used for '%s'",curr->defined_regs); 
+                	//printf("none used for '%s'",curr->defined_regs); 
                 strcpy(returnSSA,curr->defined_regs);		
                 //if never used delete the node in the linked list
                 if(curr->next != NULL && curr != HEAD) { //check to see if we are at the end or beginning of list	
@@ -574,18 +574,12 @@ int dead_code(){
             continue;
         }	
     }
-    //ssa_form(curr,returnSSA);
     //if we quit because we found a match tell the user to run again
     if(used==0 && curr != NULL)
         return MORE_TO_DO;
     else //otherwise tell the user we're done with analysis.
         return DONE;
 }
-
-
-
-//}
-
 void ssa_form()
 {
 	stmt* curr = HEAD;
@@ -594,7 +588,7 @@ void ssa_form()
 	char replace[50];
 	char regIn[20];
 	char argsOut[100];
-    
+
 	while(curr != NULL)
 	{
 		if(curr->type == GLOBAL_CONST)
@@ -602,6 +596,46 @@ void ssa_form()
 			curr = curr->next;
 			continue;
 		}
+/*		if(curr->type == BR_COND)
+		{
+			if((strcmp(curr->branch[0],"true") != 0) && (strcmp(curr->branch[0],"false") != 0))
+			{
+				strcpy(replace, "%");
+				strcat(replace, "r");
+				strcat(replace, &curr->branch[0][1]);
+
+				strcpy(curr->branch[0], replace);
+			}
+		}
+		if(curr->type == BR_COND)
+		{
+			strcpy(replace, "%");
+			strcat(replace, "r");
+			strcat(replace, &curr->branch[1][1]);
+
+			strcpy(curr->branch[1], replace);
+
+			strcpy(replace, "%");
+			strcat(replace, "r");
+			strcat(replace, &curr->branch[2][1]);
+
+			strcpy(curr->branch[2], replace);
+		}
+		if(curr->type == BR_UNCOND)
+		{
+			strcpy(replace, "%");
+			strcat(replace, "r");
+			strcat(replace, &curr->label_name[1]);
+
+			strcpy(curr->label_name, replace);
+		}
+		if(curr->type == LABELL)
+		{
+			strcpy(replace, "r");
+			strcat(replace, curr->label_name);
+
+			strcpy(curr->label_name, replace);
+		}*/
 		if(isReg(curr, 1))
 		{
 			if(curr->arg1.reg[0] != '@')
@@ -609,12 +643,12 @@ void ssa_form()
 				strcpy(replace, "%");
 				strcat(replace, "r");
 				strcat(replace, &curr->arg1.reg[1]);
-                
+
 				//printf("________________REG1: %s\n", replace);
-                
+
 				strcpy(curr->arg1.reg, replace);
 			}
-            
+
 		}
 		if(isReg(curr, 2))
 		{
@@ -623,70 +657,71 @@ void ssa_form()
 				strcpy(replace, "%");
 				strcat(replace, "r");
 				strcat(replace, &curr->arg2.reg[1]);
-                
+
 				//printf("________________REG2: %s\n", replace);
-                
+
 				strcpy(curr->arg2.reg, replace);
 			}
 		}
-        
+
 		if(curr->defined_regs[0] != '@')
 		{
 			strcpy(replace, "%");
 			strcat(replace, "r");
 			strcat(replace, &curr->defined_regs[1]);
-            
+		
 			//printf("________________defined: %s\n", replace);
-            
+
 			strcpy(curr->defined_regs, replace);
 		}
         
 		if((curr->type == CALL_SCANF) || (curr->type == CALL_PRINTF))
 		{			
-            
+
 			begin = curr->label_name;
 			strcpy(argsOut, "");
 			while(begin != NULL)
 			{
 				end = strchr(begin, '%');
-                
+
 				if(end == NULL) break;
                 
 				strncat(argsOut, begin, (end-begin-1));
 				printf("___________________argOut1: %s\n", argsOut);
                 
 				begin = end+1;
-                
+
 				end = strchr(begin, ',');
 				if(end == NULL)
 					end = begin + strlen(begin);
                 
-                
+
 				strncpy(regIn, begin, (end-begin));
+				regIn[end-begin] = '\0';
                 
 				//sprintf(argsOut, "%s", argsOut);
 				sprintf(argsOut, "%s %%r%s", argsOut, regIn);
 				printf("___________________argOut2: %s\n", argsOut);
                 
 				begin = strchr(begin, ',');
-                
+
 				if(begin == NULL)
 					break;
 				else 
 				{
-                    
+
 					begin += 2;
 					strcat(argsOut, ", ");
 				}
 			}
-            
-            
 			sprintf(curr->label_name, "%s", argsOut);
 		}
 		
 		curr = curr->next;
 	}
 }
+
+
 
 int isReg(stmt *step, int arg)
 {
@@ -710,28 +745,28 @@ int isReg(stmt *step, int arg)
 	return 0;
 }
 
-block_array generate_cfg() 
+block *generate_cfg() 
 {    
-    block_array cfg;
     int i = -1;
     int j = 0;
     int k = -1;
     int q = 0;
+    int num_of_labels = 1;
     stmt *line = HEAD;
+    block **label_list;
     block *present;
     char compare[100];
-    cfg.num_of_labels = 1;
     
     while(line != NULL)
     {
         if (line->type == LABELL)
-            cfg.num_of_labels++;
+            num_of_labels++;
         
         line = line->next;
     }
     
     line = HEAD;
-    cfg.label_list = malloc(cfg.num_of_labels * sizeof(block *));
+    label_list = malloc(num_of_labels * sizeof(block *));
     
     //printf("number of labels = %d\n", num_of_labels);
     
@@ -740,8 +775,8 @@ block_array generate_cfg()
     
     while (q != 1) 
     {
-        cfg.label_list[++i] = (block *) malloc(sizeof(block));
-        present = cfg.label_list[i];
+        label_list[++i] = (block *) malloc(sizeof(block));
+        present = label_list[i];
         strcpy(present->preds,"");
         
         while (q != 1) 
@@ -770,7 +805,7 @@ block_array generate_cfg()
     
     while (k < i) 
     {
-        present = cfg.label_list[++k];
+        present = label_list[++k];
         j = 0;
         
         while (present->instruction->type != BR_COND && present->instruction->type != BR_UNCOND)
@@ -785,67 +820,66 @@ block_array generate_cfg()
         
         if (present->instruction->type == BR_UNCOND)
         {
-            strcpy(compare, cfg.label_list[j]->instruction->label_name);
+            strcpy(compare, label_list[j]->instruction->label_name);
             
             while (strcmp(strtok(compare," "), &present->instruction->label_name[1]) != 0)
             {
                 j++;
-                strcpy(compare, cfg.label_list[j]->instruction->label_name);
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
-            present->left = cfg.label_list[j];
+            present->left = label_list[j];
             
             if (strlen(present->left->preds) != 0)
                 strcat(present->left->preds,",");
             
             strcat(present->left->preds," \%");
             
-            strcpy(compare, cfg.label_list[k]->instruction->label_name);
+            strcpy(compare, label_list[k]->instruction->label_name);
             
             if (strcmp(strtok(compare," "), "define") == 0)
                 strcat(present->left->preds, "0");  
             else
-                strcat(present->left->preds, strtok(compare," "));
+                strcat(present->left->preds, strtok(label_list[k]->instruction->label_name," "));
         }
         else if (present->instruction->type == BR_COND)
         {
-            strcpy(compare, cfg.label_list[j]->instruction->label_name);
+            strcpy(compare, label_list[j]->instruction->label_name);
             
             while (strcmp(strtok(compare," "), &present->instruction->branch[1][1]) != 0)
             {
                 j++;
-                strcpy(compare, cfg.label_list[j]->instruction->label_name);
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
-            present->left = cfg.label_list[j];
+            present->left = label_list[j];
             
             if (strlen(present->left->preds) != 0)
                 strcat(present->left->preds,",");
             
-            strcpy(compare, cfg.label_list[k]->instruction->label_name);
             strcat(present->left->preds," \%");
-            if (strcmp(strtok(compare," "), "define") == 0)
+            if (strcmp(strtok(label_list[k]->instruction->label_name," "), "define") == 0)
                 strcat(present->left->preds, "0");  
             else
-                strcat(present->left->preds, strtok(compare," "));
+                strcat(present->left->preds, strtok(label_list[k]->instruction->label_name," "));
             
             j = 0;
-            strcpy(compare, cfg.label_list[j]->instruction->label_name);
+            strcpy(compare, label_list[j]->instruction->label_name);
             
             while (strcmp(strtok(compare," "), &present->instruction->branch[2][1]) != 0)
             {
                 j++;
-                strcpy(compare, cfg.label_list[j]->instruction->label_name);
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
-            present->right = cfg.label_list[j];
+            present->right = label_list[j];
             
             if (strlen(present->right->preds) != 0)
                 strcat(present->right->preds,",");
             
             strcat(present->right->preds," \%");
             
-            strcpy(compare, cfg.label_list[k]->instruction->label_name);
+            strcpy(compare, label_list[k]->instruction->label_name);
             
             if (strcmp(strtok(compare," "), "define") == 0)
                 strcat(present->right->preds, "0");  
@@ -856,41 +890,16 @@ block_array generate_cfg()
             break;
     }
     
-    present = cfg.label_list[0];
+    present = label_list[0];
     
-    sprintf(cfg.label_list[0]->preds,"%s","");
+    sprintf(label_list[0]->preds,"%s","");
     
-    /*for (i = 0; i< cfg.num_of_labels; i++)
+    for (i = 0; i< num_of_labels; i++)
     {
-        printf("%d,\t%s\n", cfg.label_list[i]->instruction->type, cfg.label_list[i]->preds);
-    }*/
-    
-    return cfg;
-}
-
-block *getBlock(block_array cfg, stmt *line) {
-    block *present;
-    int i;
-    
-    for(i = 0; i < cfg.num_of_labels; i++) {
-        present = cfg.label_list[i];
-        
-        while (present->instruction != line) {
-            
-            if (present->instruction == line)
-                break;
-            
-            if (present->instruction->type == BR_COND || present->instruction->type == BR_UNCOND)
-                break;
-            
-            present = present->left;
-        }
-        
-        if (present->instruction == line)
-            break;
+        printf("%d,\t%s\n", label_list[i]->instruction->type, label_list[i]->preds);
     }
-    
-    present = cfg.label_list[i];
     
     return present;
 }
+
+

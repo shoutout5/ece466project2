@@ -180,7 +180,7 @@ alloca_stmt:	REG EQUALS ALLOCA INT_TYPE                              { strcpy(ty
                                                                           strcpy(type_arr[1], $6); allocaStmt($1, $7, &$4); }
                 | REG EQUALS ALLOCA array_type COMMA ALIGN NUM          { sprintf(type_arr[0],"[%d x %s]",$4.size,$4.type); allocaStmt($1, 0, &$4); }
 
-label_stmt:	LABEL				{ labelStmt($1); }
+label_stmt:	LABEL				{  labelStmt($1); }
 
 addCC_stmt:	REG EQUALS ADD INT_TYPE NUM COMMA NUM                               // constant + constant
 								{ param_t const1, const2;
@@ -412,7 +412,7 @@ sdivCR_stmt:	REG EQUALS SDIV INT_TYPE NUM COMMA REG                          // 
 
 
 brUncond_stmt:	BR LABEL_KEYWORD REG
-								{ brUncond($3); }
+								{  brUncond($3); }
 
 brCond_stmt:	BR INT_TYPE REG COMMA LABEL_KEYWORD REG COMMA LABEL_KEYWORD REG
 								{ strcpy(type_arr[0], $2); strcpy(type_arr[1], $3); strcpy(type_arr[2], $6); strcpy(type_arr[3], $9); 
@@ -648,7 +648,7 @@ int main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
 	HEAD=NULL;
 	current=NULL;
-    block_array cfg;
+    //block_array cfg;
 	if (argc<3) {
         printf("Incorrect parameters.\n");
         printf("project2 [outputfile] [inputfile]\n");
@@ -662,8 +662,9 @@ int main(int argc, char *argv[]) {
 		//printf("yyparse done\n");
 	
 //Register promotion
-	register_promotion();
+	//register_promotion();
 	//while (dead_code() != 0);
+	//ssa_form();
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
