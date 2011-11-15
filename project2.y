@@ -640,9 +640,9 @@ extern FILE *yyin;
      {
        fprintf (stderr, "yyerror: %s on line %d\n", s, yylineno);
      }
-stmt *HEAD=NULL;
-stmt *current=NULL;
-param_t empty;
+stmt *HEAD=NULL;  //set the head of the linked list of statemnt structures to null
+stmt *current=NULL; //set the current pointer to NULL
+param_t empty;		//setup a dummy parameter to pass to process instruction
 
 int main(int argc, char *argv[]) {
 	strcpy(empty.reg,"");	
@@ -653,41 +653,37 @@ int main(int argc, char *argv[]) {
         printf("Incorrect parameters.\n");
         printf("project2 [outputfile] [inputfile]\n");
     }
-	else {
+	else { //open the input file
 		yyin = fopen(argv[2], "r"); 
         if(yyin == NULL) {
 			printf("Error! Could not open input file for reading.\nPlease check your spelling and try again.\n");
-        }
-		yyparse();
-		//printf("yyparse done\n");
+        } //if the file could not be opened let the user know.
+		yyparse();	//parse the file using the grammar rules
+
 	
 //Register promotion
 	//register_promotion();
 	//while (dead_code() != 0);
 	//ssa_form();
 		current=HEAD;
-		FILE *fp = fopen(argv[1], "w");
-		if(fp == NULL) {
+		FILE *fp = fopen(argv[1], "w"); ///open the output file
+		if(fp == NULL) { //if the output file couldn't be opened.
 			printf("Error! Could not open output file for writing.\nPlease check your spelling and try again.\n");
         }
 		else  {
-			//printf("in else\n");
-			while (current != NULL){
-				generate_llvm(current,fp);
-				current=current->next;
+			while (current != NULL){ //while there is still a statement
+				generate_llvm(current,fp);	//generate llvm for the statement refered to by the pointer
+				current=current->next;		//move to the next statement pointer
             }
 		fclose(fp);
 		
         }
     }
-    
-    //cfg = generate_cfg();
-
     return 0;
 }
 
 
-void allocaStmt(char *reg, int size, array_def *contents)
+void allocaStmt(char *reg, int size, array_def *contents) //if the grammar finds an alloca statement generate a node in the linked list for it
 {
 	param_t tmp, array_size;
     //printf("___Found Alloca Statment, Reg: %s\n\n", reg);	
@@ -701,13 +697,13 @@ void allocaStmt(char *reg, int size, array_def *contents)
     }
 }
 
-void labelStmt(char *name)
+void labelStmt(char *name) //if the grammar finds a label generate a node in the linked list for it
 {
 	//printf("__Label %s\n", name);
  	process_instruction(LABELL, NULL, &empty, &empty, NULL, NULL, name);
 }
 
-void add(char *reg, param_t p1, param_t p2, int type)
+void add(char *reg, param_t p1, param_t p2, int type) //if the grammar finds an add statement generate a node in the linked list for it
 {
 	/*if(type == ADD_CC || type == ADD_CC_NSW)
 	{
@@ -729,7 +725,7 @@ void add(char *reg, param_t p1, param_t p2, int type)
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
-void sub(char *reg, param_t p1, param_t p2, int type)
+void sub(char *reg, param_t p1, param_t p2, int type) //if the grammar finds a subtract statement generate a node in the linked list for it
 {
 	/*if(type == SUB_CC || type == SUB_CC_NSW)
 	{
@@ -750,7 +746,7 @@ void sub(char *reg, param_t p1, param_t p2, int type)
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
-void mul(char *reg, param_t p1, param_t p2, int type)
+void mul(char *reg, param_t p1, param_t p2, int type) //if the grammar finds a multiply statement generate a node in the linked list for it
 {
 	/*if(type == MUL_CC || type == MUL_CC_NSW)
 	{
@@ -772,7 +768,7 @@ void mul(char *reg, param_t p1, param_t p2, int type)
     process_instruction(type, reg, &p1, &p2, NULL, NULL, empty.reg);
 }
 
-void sdiv(char *reg, param_t p1, param_t p2, int type)
+void sdiv(char *reg, param_t p1, param_t p2, int type) //if the grammar finds a divide statement generate a node in the linked list for it
 {
 	/*if(type == SDIV_CC || type == SDIV_CC_NSW)
 	{
@@ -795,21 +791,21 @@ void sdiv(char *reg, param_t p1, param_t p2, int type)
 }
 
 void brUncond(char *label)
-{
+{	//if the grammar finds a branch statement generate a node in the linked list for it
 	//printf("__Branch: %s", &label[1]);
 	process_instruction(BR_UNCOND, NULL, &empty, &empty, NULL, NULL, label);
 }
 
 
 void brCond(char *cond, char *trueLabel, char *falseLabel)
-{
+{ //if the grammar finds a conditional branch statement generate a node in the linked list for it
 	//printf("__Branch: cond: %s, true: %s, false: %s", cond, &trueLabel[1], &falseLabel[1]);
 	char *arr[3] = {cond, trueLabel, falseLabel};
 	process_instruction(BR_COND, NULL, &empty, &empty, NULL, arr, empty.reg);
 }
 
 void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
-{
+{ //if the grammar finds a compare statement generate a node in the linked list for it
 	/*if(type == CMP_CC)
 	{
 		printf("__CMP: %s <- %d %s %d\n\n", assignReg, p1.imm, comp, p2.imm);
@@ -831,7 +827,7 @@ void cmpStmt(char *comp, char *assignReg, param_t p1, param_t p2, int type)
 }
 
 void getelementpointers(int type,char *defined, param_t param1, param_t param2, param_t param3)
-{
+{ //if the grammar finds a get element pointer statement generate a node in the linked list for it
 	//printf("___GEP ");
 	if(type == GEP_RCR)
 		process_instruction(type, defined,&param1,&param3,param2.reg,NULL,"");
@@ -840,7 +836,7 @@ void getelementpointers(int type,char *defined, param_t param1, param_t param2, 
 }
 
 void global_constant(char *name, int size, char *strVal)
-{
+{ //if the grammar finds a global constant generate a node in the linked list for it
 	param_t value, sizeParam;
 	//printf("____GBL_CONST");
 	strcpy(value.reg, strVal);
@@ -848,7 +844,7 @@ void global_constant(char *name, int size, char *strVal)
 	process_instruction(GLOBAL_CONST,name,&sizeParam,&value,"",NULL,"");
 }
 
-void loadStmt(char *destReg, char *pointer)
+void loadStmt(char *destReg, char *pointer) //if the grammar finds a load statement generate a node in the linked list for it
 {
 	//printf("__load: %s <- %s\n\n", destReg, pointer);
 	param_t tmp;
@@ -858,7 +854,7 @@ void loadStmt(char *destReg, char *pointer)
 }
 
 
-void storeStmt(char *dest, param_t param, int type)
+void storeStmt(char *dest, param_t param, int type) //if the grammar finds a store statement generate a node in the linked list for it
 {
 	/*if(type == STR_REG)
 	{
@@ -872,7 +868,7 @@ void storeStmt(char *dest, param_t param, int type)
     process_instruction(type,dest,&param, &empty, NULL, NULL, empty.reg);
 }
 
-void return_stmt(char *return_type, param_t param, int type)
+void return_stmt(char *return_type, param_t param, int type) //if the grammar finds a return statement generate a node in the linked list for it
 {
 	//printf("__return statement: %s ",return_type);
 	process_instruction(type,empty.reg,&param,&empty,NULL, NULL, return_type);
@@ -880,16 +876,13 @@ void return_stmt(char *return_type, param_t param, int type)
 
 void call(int type, char *defined, param_t param1, param_t param2, char *globdef_used, char *arg_list)
 {    
-    /*if (type == CALL_PRINTF)
-		printf("____PRINTF");
-	else		
-		printf("____SCANF");*/
-    
+    //if the grammar finds a call statement generate a node in the linked list for it
 	process_instruction(type, defined, &param1, &param2, globdef_used, NULL, arg_list);
 }
 
 void globalVar(char *name, char *typeData, int val)
 {
+	//if the grammar finds a global var generate a node in the linked list for it
 	param_t arg1, arg2;
 	arg1.imm = val;
 	arg2.imm = val;
@@ -899,6 +892,7 @@ void globalVar(char *name, char *typeData, int val)
 
 void commentLabel(char *text)
 {
+	//if the grammar finds a commented label generate a node in the linked list for it
 	if(!strncmp(text,"; <label>:", 10))
 		labelStmt(&text[10]);
 }

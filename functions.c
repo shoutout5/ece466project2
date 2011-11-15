@@ -20,37 +20,37 @@ int count=0;
 int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *arg2, char *cmp, char **branch, char *label_name){
     int i;
     
-    //printf("starting\n");
+    ////printf("starting\n");
 	stmt *data = (stmt *) malloc(sizeof(stmt));
 	data->type = type;
 	
-	if(defined_regs != NULL)
+	if(defined_regs != NULL)						// input defined regs
 		strcpy(data->defined_regs, defined_regs);
 	else
 		strcpy(data->defined_regs,"");
     
 	if (type == SUB_CC || type == SUB_CR || type == ADD_CC || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == STR_CONST || type == ALLOC_ARRAY || type == CALL_PRINTF || type == ADD_CR || type == CMP_CC || type == CMP_CR || type == ALLOC_ARRAY || type == CALL_SCANF || type == GLOBAL_CONST || type == RET_NUM)
-		data->arg1.imm=arg1->imm;
+		data->arg1.imm=arg1->imm;				// input arg1 vars
 	else
 		strcpy(data->arg1.reg,arg1->reg);
 	if (type == SUB_CC || type == SUB_RC || type == ADD_CC || type == ADD_RC || type == CMP_CC || type == CMP_RC || type == ALLOC_ARRAY || type == CALL_SCANF || type == CALL_PRINTF || type == GEP_RC || type == GEP_RCC)
-		data->arg2.imm=arg2->imm;
+		data->arg2.imm=arg2->imm;				// input arg2 vars
 	else
 		strcpy(data->arg2.reg,arg2->reg);
     
-	strcpy(data->label_name,label_name);
+	strcpy(data->label_name,label_name);			// input label names
     
     if (cmp != NULL)
-        strcpy(data->cmp, cmp);
+        strcpy(data->cmp, cmp);					// input compare information
     
     for(i=0; i<=5; i++)
     {
-	if (type == BR_COND) {
+	if (type == BR_COND) {						// input branch data
 		if(branch[i] != NULL)
 	            strcpy(data->branch[i],branch[i]);
          	if (i == 3)
                		break;
-        } else {
+        } else {								// input array information
             if(type_arr[i] != NULL)
             {
                 //printf("%d %s\n", i, type_arr[i]);
@@ -59,8 +59,8 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
         }
     }
     
-	data->next=NULL;
-	if (current != NULL)
+	data->next=NULL;							// add new node and update existing node
+	if (current != NULL)						// in linked list of all statements
 		current->next=data;
 	if (HEAD == NULL)
 		HEAD=data;
@@ -74,7 +74,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
 void generate_llvm(stmt *stmnt, FILE *fp){
     
 	char output[150];
-	switch (stmnt->type){
+	switch (stmnt->type){		// generate llvm code from data structure based on type of statement
             
 		case ADD_CC:
 			sprintf(output,"  %s = add %s %d, %d\n",stmnt->defined_regs,stmnt->branch[0],stmnt->arg1.imm,stmnt->arg2.imm);
@@ -283,7 +283,7 @@ void register_promotion() {
 	char *newName;
 	int i;
     
-	for(i=0;i<200;i++)
+	for(i=0;i<200;i++)			// set all values to 0
 		version[i]=0;
     
 	stmt *temp;
@@ -352,20 +352,10 @@ void register_promotion() {
 			newName = isPromtedVar(cur->arg1.reg, LOADD);
 			if(newName != NULL)
 			{
-				//if(strchr(cur->branch[0],'*') == NULL)
-				//{
-					strcpy(cur->branch[0],"i32");
-					strcpy(cur->arg1.reg, newName);
-					cur->arg2.imm = 0;
-					cur->type = ADD_RC;
-				//}
-				/*else
-				{
-					strcpy(cur->arg1.reg, newName);
-					strcpy(cur->branch[1], "i32");
-					cur->arg2.imm = 0;
-					cur->type = GEP_RC;
-				}*/
+				strcpy(cur->branch[0],"i32");
+				strcpy(cur->arg1.reg, newName);
+				cur->arg2.imm = 0;
+				cur->type = ADD_RC;
 			}			
 		}
 		else if(cur->type == STR_REG)
@@ -414,45 +404,45 @@ void register_promotion() {
 			}
 		}	
 		
-		cur=cur->next;
+		cur=cur->next;			// move to next statement
 	}
 }
 
 char* isPromtedVar(char *reg, int type)
 {
 	int i;
-	for(i=0;i<count;i++)
+	for(i=0;i<count;i++)			// compare to all variables that are promoted
 	{
-		if(!strcmp(reg, names[i]))
+		if(!strcmp(reg, names[i]))	// make comparison
 		{
-			if(type != LOADD)
+			if(type != LOADD)		// incrment version on loads statements
 				version[i]++;
             
 			sprintf(pass, "%s_%d", repNames[i], version[i]);
-			return pass;
+			return pass;			// gen and return new name
 		}
 	}
-	return NULL;
+	return NULL;					// variable not promoted
 }
 
 
 int contains(char *string, char *find)
 {
 	int i;
-	if(!strcmp(find,"NOT A VAR"))
+	if(!strcmp(find,"NOT A VAR"))		// check for wrong input
 		return 0;
     
-	for(i=0;i<=(strlen(string)-strlen(find));i++)
+	for(i=0;i<=(strlen(string)-strlen(find));i++)		// compare by shifing find along search string
 	{
 		if(!strncmp(find,&string[i],strlen(find)))
 		{
 			if(((i+strlen(find) == strlen(string)) || (string[i+strlen(find)] == ' ') || (string[i+strlen(find)] == ',')))
 			{
-				return 1;
+				return 1;			// found
 			}
 		}
 	}
-	return 0;
+	return 0;						// not found
 }
 
 int dead_code(){
@@ -472,7 +462,7 @@ int dead_code(){
                 continue;	
                 
             } else {
-                printf("defd found: %s\n",curr->defined_regs);
+               //printf("defd found: %s\n",curr->defined_regs);
                 step=HEAD;
                 //run through the file from the current point and see if there are any uses of defined_regs
                 while(step != NULL){
@@ -524,7 +514,7 @@ int dead_code(){
                             sprintf(temp,"%s",printscan[j]);
                             //printf("tmp: %s\n",temp);
                             if(!strcmp(temp,curr->defined_regs)){
-                                printf("found %s\n",temp);	
+                               //printf("found %s\n",temp);	
                                 used++;	
                             }
                         }
@@ -591,7 +581,7 @@ void ssa_form()
 
 	while(curr != NULL)
 	{
-		if(curr->type == GLOBAL_CONST)
+		if(curr->type == GLOBAL_CONST)	// ignore global constants for renameing
 		{
 			curr = curr->next;
 			continue;
@@ -636,11 +626,11 @@ void ssa_form()
 
 			strcpy(curr->label_name, replace);
 		}*/
-		if(isReg(curr, 1))
+		if(isReg(curr, 1))				// check if arg1 of instruction is a register
 		{
 			if(curr->arg1.reg[0] != '@')
 			{
-				strcpy(replace, "%");
+				strcpy(replace, "%");	// generate new name and replace
 				strcat(replace, "r");
 				strcat(replace, &curr->arg1.reg[1]);
 
@@ -650,11 +640,11 @@ void ssa_form()
 			}
 
 		}
-		if(isReg(curr, 2))
+		if(isReg(curr, 2))				// check if arg2 of instruction is a register
 		{
 			if(curr->arg2.reg[0] != '@')
 			{
-				strcpy(replace, "%");
+				strcpy(replace, "%");	// generate new name and replace
 				strcat(replace, "r");
 				strcat(replace, &curr->arg2.reg[1]);
 
@@ -666,7 +656,7 @@ void ssa_form()
 
 		if(curr->defined_regs[0] != '@')
 		{
-			strcpy(replace, "%");
+			strcpy(replace, "%");		// generate new name for defined register
 			strcat(replace, "r");
 			strcat(replace, &curr->defined_regs[1]);
 		
@@ -680,28 +670,28 @@ void ssa_form()
 
 			begin = curr->label_name;
 			strcpy(argsOut, "");
-			while(begin != NULL)
+			while(begin != NULL)		//scan through entire arg string
 			{
-				end = strchr(begin, '%');
+				end = strchr(begin, '%');	//find and print type information
 
 				if(end == NULL) break;
                 
 				strncat(argsOut, begin, (end-begin-1));
-				printf("___________________argOut1: %s\n", argsOut);
+				//printf("___________________argOut1: %s\n", argsOut);
                 
 				begin = end+1;
 
-				end = strchr(begin, ',');
+				end = strchr(begin, ',');	// find and rename register
 				if(end == NULL)
 					end = begin + strlen(begin);
                 
 
 				strncpy(regIn, begin, (end-begin));
-				regIn[end-begin] = '\0';
+				regIn[end-begin] = '\0';		// force terminating character
                 
 				//sprintf(argsOut, "%s", argsOut);
 				sprintf(argsOut, "%s %%r%s", argsOut, regIn);
-				printf("___________________argOut2: %s\n", argsOut);
+				//printf("___________________argOut2: %s\n", argsOut);
                 
 				begin = strchr(begin, ',');
 
@@ -723,7 +713,7 @@ void ssa_form()
 
 
 
-int isReg(stmt *step, int arg)
+int isReg(stmt *step, int arg)	// checks if arg is register based on instruction type
 {
 	if (step->type != SUB_CC || step->type != SUB_CR || step->type != ADD_CC || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != ALLOC_ARRAY || step->type != CALL_PRINTF || step->type != ADD_CR || step->type != CMP_CC || step->type != CMP_CR || step->type != STR_CONST || step->type != ALLOC_ARRAY || step->type != CALL_SCANF || step->type != GLOBAL_CONST || step->type != RET_NUM){
 		//now that we're sure it's a register check to see if it is used
@@ -757,7 +747,7 @@ block *generate_cfg()
     block *present;
     char compare[100];
     
-    while(line != NULL)
+    while(line != NULL)				// find all labels
     {
         if (line->type == LABELL)
             num_of_labels++;
@@ -770,21 +760,21 @@ block *generate_cfg()
     
     //printf("number of labels = %d\n", num_of_labels);
     
-    while (line->type != FUNC_DEC)
+    while (line->type != FUNC_DEC)		// advance to function declaration
         line=line->next;
     
     while (q != 1) 
     {
-        label_list[++i] = (block *) malloc(sizeof(block));
+        label_list[++i] = (block *) malloc(sizeof(block));	//dynamically size array
         present = label_list[i];
         strcpy(present->preds,"");
         
         while (q != 1) 
         {
-            present->instruction = line;
+            present->instruction = line;	// input instruction data
             present->right = NULL;
             
-            if (line->next != NULL)
+            if (line->next != NULL)		// add new block data
             {
                 present->left = (block *) malloc(sizeof(block));
                 strcpy(present->left->preds,"");
@@ -794,7 +784,7 @@ block *generate_cfg()
             else
                 q = 1;
             
-            if (line->type == LABELL)
+            if (line->type == LABELL)		// add new label data
             {
                 present->left = NULL;
                 present->right = NULL;
@@ -810,7 +800,7 @@ block *generate_cfg()
         
         while (present->instruction->type != BR_COND && present->instruction->type != BR_UNCOND)
         {
-            present=present->left;
+            present=present->left;			// check for predisesors
             
             if (present->instruction->type == RET_NUM)
             {
@@ -824,7 +814,7 @@ block *generate_cfg()
             
             while (strcmp(strtok(compare," "), &present->instruction->label_name[1]) != 0)
             {
-                j++;
+                j++;					// compare and put data in graph
                 strcpy(compare, label_list[j]->instruction->label_name);
             }
             
@@ -833,7 +823,7 @@ block *generate_cfg()
             if (strlen(present->left->preds) != 0)
                 strcat(present->left->preds,",");
             
-            strcat(present->left->preds," \%");
+            strcat(present->left->preds," \%");	// find label name for blocks that branch to
             
             strcpy(compare, label_list[k]->instruction->label_name);
             
@@ -896,7 +886,7 @@ block *generate_cfg()
     
     for (i = 0; i< num_of_labels; i++)
     {
-        printf("%d,\t%s\n", label_list[i]->instruction->type, label_list[i]->preds);
+       //printf("%d,\t%s\n", label_list[i]->instruction->type, label_list[i]->preds);
     }
     
     return present;
