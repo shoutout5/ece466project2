@@ -8,7 +8,7 @@ int process_instruction(int type, char *defined_regs, param_t *arg1, param_t *ar
 void generate_llvm(stmt *stmnt, FILE *fp);
 int contains(char *string, char *find);
 void register_promotion();
-void ssa_form(stmt *stmnt, char *reg);
+void ssa_form();
 char* isPromtedVar(char *reg, int type);
 int isReg(stmt *step, int arg);
 int dead_code();

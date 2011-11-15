@@ -541,111 +541,108 @@ int dead_code(){
             continue;
         }	
     }
-    //ssa_form(curr,returnSSA);
     //if we quit because we found a match tell the user to run again
     if(used==0 && curr != NULL)
         return MORE_TO_DO;
     else //otherwise tell the user we're done with analysis.
         return DONE;
 }
-
-
-
-//}
-
-void ssa_form(stmt *stmnt, char *reg)
+void ssa_form()
 {
-	int ref;
-	int currentReg;
-	stmt *curr = stmnt;
-	
+	stmt* curr = HEAD;
 	char *begin;
 	char *end;
-	char regIn[50];
-	char argsOut[100] = "";
-	
-	//printf("REG: %s\n", reg);
-	
-	if(stmnt == NULL)		//no new statments to rename
-	{
-		//printf("NULL REturn\n");
-		return;
-	}
-    
-	ref = atoi(&reg[1]);
-	if(ref == 0)		//removed a variable or something not a register
-	{
-		//printf("No NUm Return\n");
-		return;
-	}
-    
+	char replace[50];
+	char regIn[20];
+	char argsOut[100];
+
 	while(curr != NULL)
 	{
 		if(isReg(curr, 1))
 		{
-			currentReg = atoi(&curr->arg1.reg[1]);
-			if((currentReg != 0) && (currentReg > ref))
+			if(curr->arg1.reg[0] != '@')
 			{
-				sprintf(curr->arg1.reg, "%%%d", (currentReg-1));
-				//printf("Reg Deced %d\n", (currentReg-1));
+				strcpy(replace, "%");
+				strcat(replace, "r");
+				strcat(replace, &curr->arg1.reg[1]);
+
+				//printf("________________REG1: %s\n", replace);
+
+				strcpy(curr->arg1.reg, replace);
 			}
+
 		}
 		if(isReg(curr, 2))
 		{
-			currentReg = atoi(&curr->arg2.reg[1]);
-			if((currentReg != 0) && (currentReg > ref))
+			if(curr->arg2.reg[0] != '@')
 			{
-				sprintf(curr->arg2.reg, "%%%d", (currentReg-1));
-				//printf("Reg Deced %d\n", (currentReg-1));
+				strcpy(replace, "%");
+				strcat(replace, "r");
+				strcat(replace, &curr->arg2.reg[1]);
+
+				//printf("________________REG2: %s\n", replace);
+
+				strcpy(curr->arg2.reg, replace);
 			}
 		}
-        
-		currentReg = atoi(&curr->defined_regs[1]);
-		if((currentReg != 0) && (currentReg > ref))
+
+		if(curr->defined_regs[0] != '@')
 		{
-			sprintf(curr->defined_regs, "%%%d", (currentReg-1));
-			//printf("Reg Deced %d\n", (currentReg-1));
+			strcpy(replace, "%");
+			strcat(replace, "r");
+			strcat(replace, &curr->defined_regs[1]);
+		
+			//printf("________________defined: %s\n", replace);
+
+			strcpy(curr->defined_regs, replace);
 		}
         
 		if((curr->type == CALL_SCANF) || (curr->type == CALL_PRINTF))
 		{			
+
 			begin = curr->label_name;
+			strcpy(argsOut, "");
 			while(begin != NULL)
 			{
 				end = strchr(begin, '%');
+
 				if(end == NULL) break;
                 
 				strncat(argsOut, begin, (end-begin-1));
                 
 				begin = end+1;
-				end = strchr(begin, ' ');
+
+				end = strchr(begin, ',');
 				if(end == NULL)
 					end = begin + strlen(begin);
                 
+
 				strncpy(regIn, begin, (end-begin));
                 
-				currentReg = atoi(regIn);
-				if(currentReg > ref)
-					sprintf(argsOut, "%s %%%d", argsOut, (currentReg-1));
-				else
-					sprintf(argsOut, "%s %%%d", argsOut, currentReg);
+				//sprintf(argsOut, "%s", argsOut);
+				sprintf(argsOut, "%s %%r%s", argsOut, regIn);
                 
 				begin = strchr(begin, ',');
+
 				if(begin == NULL)
 					break;
 				else 
 				{
+
 					begin += 2;
 					strcat(argsOut, ", ");
 				}
 			}
+
             
 			sprintf(curr->label_name, "%s", argsOut);
 		}
-        
+		
 		curr = curr->next;
 	}
 }
+
+
 
 int isReg(stmt *step, int arg)
 {
@@ -675,9 +672,24 @@ block *generate_cfg()
     int j = 0;
     int k = -1;
     int q = 0;
+    int num_of_labels = 1;
     stmt *line = HEAD;
-    block *label_list[20];
+    block **label_list;
     block *present;
+    char compare[100];
+    
+    while(line != NULL)
+    {
+        if (line->type == LABELL)
+            num_of_labels++;
+        
+        line = line->next;
+    }
+    
+    line = HEAD;
+    label_list = malloc(num_of_labels * sizeof(block *));
+    
+    //printf("number of labels = %d\n", num_of_labels);
     
     while (line->type != FUNC_DEC)
         line=line->next;
@@ -686,7 +698,7 @@ block *generate_cfg()
     {
         label_list[++i] = (block *) malloc(sizeof(block));
         present = label_list[i];
-        strcpy(present->preds,"; preds =");
+        strcpy(present->preds,"");
         
         while (q != 1) 
         {
@@ -729,32 +741,41 @@ block *generate_cfg()
         
         if (present->instruction->type == BR_UNCOND)
         {
-            while (strcmp(strtok(label_list[j]->instruction->label_name," "), &present->instruction->label_name[1]) != 0)
+            strcpy(compare, label_list[j]->instruction->label_name);
+            
+            while (strcmp(strtok(compare," "), &present->instruction->label_name[1]) != 0)
             {
                 j++;
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
             present->left = label_list[j];
             
-            if (strcmp(present->left->preds, "; preds =") != 0)
+            if (strlen(present->left->preds) != 0)
                 strcat(present->left->preds,",");
             
             strcat(present->left->preds," \%");
-            if (strcmp(strtok(label_list[k]->instruction->label_name," "), "define") == 0)
+            
+            strcpy(compare, label_list[k]->instruction->label_name);
+            
+            if (strcmp(strtok(compare," "), "define") == 0)
                 strcat(present->left->preds, "0");  
             else
                 strcat(present->left->preds, strtok(label_list[k]->instruction->label_name," "));
         }
         else if (present->instruction->type == BR_COND)
         {
-            while (strcmp(strtok(label_list[j]->instruction->label_name," "), &present->instruction->branch[1][1]) != 0)
+            strcpy(compare, label_list[j]->instruction->label_name);
+            
+            while (strcmp(strtok(compare," "), &present->instruction->branch[1][1]) != 0)
             {
                 j++;
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
             present->left = label_list[j];
             
-            if (strcmp(present->left->preds, "; preds =") != 0)
+            if (strlen(present->left->preds) != 0)
                 strcat(present->left->preds,",");
             
             strcat(present->left->preds," \%");
@@ -764,21 +785,27 @@ block *generate_cfg()
                 strcat(present->left->preds, strtok(label_list[k]->instruction->label_name," "));
             
             j = 0;
-            while (strcmp(strtok(label_list[j]->instruction->label_name," "), &present->instruction->branch[2][1]) != 0)
+            strcpy(compare, label_list[j]->instruction->label_name);
+            
+            while (strcmp(strtok(compare," "), &present->instruction->branch[2][1]) != 0)
             {
                 j++;
+                strcpy(compare, label_list[j]->instruction->label_name);
             }
             
             present->right = label_list[j];
             
-            if (strcmp(present->left->preds, "; preds =") != 0)
-                strcat(present->left->preds,",");
+            if (strlen(present->right->preds) != 0)
+                strcat(present->right->preds,",");
             
             strcat(present->right->preds," \%");
-            if (strcmp(strtok(label_list[k]->instruction->label_name," "), "define") == 0)
+            
+            strcpy(compare, label_list[k]->instruction->label_name);
+            
+            if (strcmp(strtok(compare," "), "define") == 0)
                 strcat(present->right->preds, "0");  
             else
-                strcat(present->right->preds, strtok(label_list[k]->instruction->label_name," "));
+                strcat(present->right->preds, strtok(compare," "));
         }
         else    // RETURN STATEMENT
             break;
@@ -788,10 +815,10 @@ block *generate_cfg()
     
     sprintf(label_list[0]->preds,"%s","");
     
-    /*for (i = 0; i<= 11; i++)
-     {
-     printf("%d, %s\n", label_list[i]->instruction->type, label_list[i]->preds);
-     }*/
+    for (i = 0; i< num_of_labels; i++)
+    {
+        printf("%d,\t%s\n", label_list[i]->instruction->type, label_list[i]->preds);
+    }
     
     return present;
 }

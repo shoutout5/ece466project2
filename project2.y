@@ -657,10 +657,14 @@ int main(int argc, char *argv[]) {
         }
 		yyparse();
 		//printf("yyparse done\n");
+
+		
         
-        //Register promotion
-        while (dead_code() != 0);
+
+        //while (dead_code() != 0);
         register_promotion();
+	dead_code();
+	ssa_form();
 		current=HEAD;
 		FILE *fp = fopen(argv[1], "w");
 		if(fp == NULL) {
