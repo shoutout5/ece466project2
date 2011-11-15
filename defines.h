@@ -101,6 +101,11 @@ typedef struct nodeptr {
     char preds[100];
 } block;
 
+typedef struct {
+    block **label_list;
+    int num_of_labels;
+} block_array;
+
 extern stmt *current;
 extern stmt *HEAD;
 

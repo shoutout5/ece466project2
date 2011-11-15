@@ -12,6 +12,7 @@ void ssa_form();
 char* isPromtedVar(char *reg, int type);
 int isReg(stmt *step, int arg);
 int dead_code();
-
+block_array generate_cfg();
+block *getBlock(block_array cfg, stmt *line);
 
 #endif
